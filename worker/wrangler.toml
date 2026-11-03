@@ -1,0 +1,27 @@
+name = "revise"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# Joignable uniquement par le domaine protégé par Access
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "revise.reesch.com", custom_domain = true }]
+
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "revise"
+database_id = "6a81be5a-a178-4572-b2d7-0d331340285e"
+migrations_dir = "migrations"
+
+# R2 (bucket revise-imports) ajouté en phase 3, avec l'import de fichiers
+
+[vars]
+CLAUDE_MODEL = "claude-sonnet-5-5"
+TEAM_DOMAIN = "https://young-brook-6906.cloudflareaccess.com"
+POLICY_AUD = "a38ce0026d37977463d6723c2479e6b13000e3b4da1b65a38095e3dcc2551359"
+OWNER_EMAIL = "lolobach01100@gmail.com"
