@@ -217,6 +217,19 @@ Vérification du rendu :
 - [x] Tester avec un cours de 20 pages : < 5 min, cartes exploitables
 - [x] Nettoyage : retirer `CLAUDE_MODEL` de `wrangler.toml` et de `worker/src/index.ts`
 
+### 3.6 Code et schémas dans les cartes
+
+- [x] Rendu dans `question`, `answer`, `explanation` : `` `code` ``, bloc ` ```langage `, bloc ` ```mermaid ` en schéma (Mermaid chargé à la demande, thème clair/sombre, source affiché si invalide)
+- [x] Limite à part pour les blocs ` ``` ` : `MAX_CODE = 2000` ; lecture du JSON importé sans se fier aux ` ``` `
+- [x] Prompt : code en ligne ou en bloc, schéma Mermaid seulement s'il est dans le cours
+- [x] Session : champ de réponse à chasse fixe, sans correcteur, `Tab` insère une tabulation sur les cartes de code
+- [x] Éditeur et relecture : aperçu rendu sous chaque champ qui contient du code
+- [ ] Vérifier dans le navigateur : schéma clair/sombre, aperçu, `Tab`
+- [x] Coloration syntaxique : Shiki chargé à la demande, thèmes GitHub clair/sombre via `light-dark()`, texte brut si langage inconnu
+- [ ] Dessin à main levée et formes simples (outil SVG maison, dessins dans une table à part, carte → `![dessin](id)`)
+- [ ] Trous `___` dans du code
+- [ ] Mermaid en cache hors ligne (avec la PWA)
+
 ---
 
 ## Phase 4 — Confort et suivi

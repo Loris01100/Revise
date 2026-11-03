@@ -141,9 +141,28 @@ export function Rich(p: { text: string; draw?: boolean }) {
         if (i % 2 === 0) return <Marked text={s} draw={p.draw} />;
         const m = s.match(/^```([^\n]*)\n([\s\S]*?)\n?```$/);
         if (!m) return <code>{s.slice(1, -1)}</code>;
-        return m[1].trim() === "mermaid" ? <Diagram src={m[2]} /> : <code class="block">{m[2]}</code>;
+        const lang = m[1].trim();
+        return lang === "mermaid" ? <Diagram src={m[2]} /> : <Code lang={lang} src={m[2]} />;
       })}
     </>
+  );
+}
+
+/** Bloc de code coloré par Shiki (moteur et thèmes de VS Code), chargé au premier bloc ; texte brut si le langage est inconnu. */
+function Code(p: { lang: string; src: string }) {
+  const [html, setHtml] = createSignal<string>();
+  onMount(async () => {
+    const { codeToHtml, bundledLanguages } = await import("shiki");
+    if (!(p.lang in bundledLanguages)) return;
+    // light-dark() suit color-scheme, donc le thème de l'app sans CSS en plus
+    const opts = { lang: p.lang, themes: { light: "github-light", dark: "github-dark" }, defaultColor: "light-dark()" } as const;
+    // Échappé par Shiki ; structure inline (<span>, <br>) pour rester valide dans <h1> et <p>
+    setHtml(await codeToHtml(p.src, { ...opts, structure: "inline" }));
+  });
+  return (
+    <Show when={html()} fallback={<code class="block">{p.src}</code>}>
+      <code class="block" innerHTML={html()} />
+    </Show>
   );
 }
 
