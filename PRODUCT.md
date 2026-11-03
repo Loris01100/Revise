@@ -1,0 +1,63 @@
+# Product
+
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
+## Stack
+
+TypeScript + Vite + SolidJS (frontend), Hono on a single Cloudflare Worker (API + static assets), Rust core compiled to WebAssembly (FSRS, session composition, DOCX extraction, card validation), D1, R2, Claude API. Installable PWA.
+
+## Users
+
+One user: the owner, a student with ADHD / fragile attention. Revises their own course material (PDF or DOCX) in short sessions, on a computer (keyboard) or on a phone (touch). Starting a session and staying in it is the hard part, not understanding the content.
+
+## Product Purpose
+
+Revise turns course files into revision cards and runs short, distraction-free spaced-repetition sessions (FSRS) on them. Success: the user revises every day without having to decide anything, and a 20-page course becomes usable cards in under two minutes.
+
+## Positioning
+
+A personal revision tool built around protecting attention: zero decisions during revision (the app picks the next card, the duration and the pause), zero friction at import (drop a file, review proposed cards, validate), and no guilt mechanics.
+
+## Operating Context
+
+- Flow: subjects → import PDF/DOCX → Claude generates draft cards → user accepts/edits/deletes each → accepted cards enter FSRS sessions.
+- Session modes: `quick5` (5 most overdue cards, the primary action), `timed` (10–25 min), `subject`.
+- Active recall: the answer is typed before the correction is revealed, then graded 1–4 (« à revoir », « difficile », « bien », « facile »).
+- Parking à pensées: capture an intrusive thought mid-session without leaving it; shown at the end.
+- Card types: question/réponse, texte à trous, QCM, réponse longue (type `explain` en base).
+
+## Capabilities and Constraints
+
+- Single user, behind Cloudflare Access + JWT re-verification in the Worker; the Claude key never reaches the browser.
+- Import limits: 20 MB, magic-byte check, daily import quota.
+- Interface language: French.
+- Screens: Accueil, Import, Relecture, Session focus, Pause, Fin de session, Matières, Statistiques.
+- Open: generating cards from images (whiteboard photos, handwritten notes) — undecided.
+
+## Brand Commitments
+
+- Name: **Revise** (the design document's working name "Ancre" is dropped).
+- Tone: calm, non-judgmental. Dashboard shows what is acquired, never what was missed.
+
+## Evidence on Hand
+
+- Design document: `docs/Revise — Plan de conception.pdf`; build checklist: `docs/ETAPES.md`.
+- No logo, visual assets or real card data yet.
+
+## Product Principles
+
+1. Zero decisions during revision: the app chooses; one primary action on the home screen.
+2. Protect attention: no visible navigation, notifications or extra elements during a session; Échap is the only exit.
+3. Zero friction at import: drop, review, validate.
+4. No punishment: no streaks, no "missed" counters; show progress acquired.
+5. Zero exposure: nothing reachable without the owner's identity.
+
+## Accessibility & Inclusion
+
+- Designed for ADHD: minimal stimuli, one thing per screen, soft animations, calm colors, automatic break prompts.
+- Full keyboard operation (Espace reveal, 1–4 grade, P parking, Échap pause) and comfortable touch targets.
+- Light and dark themes; respect `prefers-reduced-motion`.

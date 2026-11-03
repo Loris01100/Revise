@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "docs/design/journey-revision.html"
+        ],
+        "createdAt": "2026-11-02T13:04:48.223Z",
+        "reason": "Claude: style block mandated verbatim by the Intent /journey skill for its flow diagrams; internal design doc, not product UI"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "docs/design/journey-revision.html"
+        ],
+        "createdAt": "2026-11-02T13:04:48.746Z",
+        "reason": "Claude: style block mandated verbatim by the Intent /journey skill for its flow diagrams; internal design doc, not product UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          "docs/design/journey-revision.html"
+        ],
+        "createdAt": "2026-11-02T13:05:08.935Z",
+        "reason": "Claude: style block mandated verbatim by the Intent /journey skill for its flow diagrams; internal design doc, not product UI"
+      }
+    ]
+  }
+}

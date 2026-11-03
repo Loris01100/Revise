@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Surligneur sur polycopié — session</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1440px; height: 900px; overflow: hidden; font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+    background: #F2F2EF; color: #262626;
+    background-image: radial-gradient(rgba(38,38,38,.05) 1px, transparent 1px); background-size: 6px 6px; }
+  .bar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 64px; font-size: 15px;
+    border-bottom: 1px solid rgba(38,38,38,.12); }
+  .pos { font-variant-numeric: tabular-nums; }
+  .pause { border: 1px solid rgba(38,38,38,.3); border-radius: 4px; padding: 8px 14px; background: #FFFFFF; font: inherit; }
+  .sheet { position: absolute; left: 50%; top: 136px; transform: translateX(-50%); width: 760px; }
+  .subject { display: inline-block; font-size: 15px; font-weight: 700; padding: 0 6px; margin-bottom: 20px;
+    background: linear-gradient(transparent 20%, #FF9BCB 20%, #FF9BCB 85%, transparent 85%); }
+  .q { font-size: 38px; line-height: 48px; font-weight: 700; margin-bottom: 40px; }
+  .q mark { background: linear-gradient(transparent 55%, #FFF04A 55%, #FFF04A 92%, transparent 92%); color: inherit; }
+  label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .field { height: 120px; background: #FFFFFF; border: 1px solid rgba(38,38,38,.25); border-radius: 4px; padding: 14px 16px;
+    font-size: 17px; color: #6A6A6A; }
+  .hint { font-size: 14px; color: #555555; margin-top: 10px; }
+  .act { margin-top: 24px; display: inline-block; background: #262626; color: #FFFFFF; border-radius: 4px; padding: 12px 20px;
+    font-size: 16px; font-weight: 700; }
+  .source { position: absolute; left: 64px; bottom: 48px; font-size: 13px; color: #555555; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="pos">3 / 5</span>
+    <button class="pause">Pause · Échap</button>
+  </div>
+  <div class="sheet">
+    <span class="subject">Microéconomie</span>
+    <p class="q">Qu'est-ce que l'<mark>élasticité-prix</mark> de la demande ?</p>
+    <label>Ta réponse</label>
+    <div class="field">Ta réponse…</div>
+    <p class="hint">Entrée pour voir la réponse · Maj+Entrée pour aller à la ligne</p>
+    <span class="act">Afficher la réponse</span>
+  </div>
+  <p class="source">Cours, p. 12</p>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Skills installés localement (voir README)
+.claude/skills/
+.claude/agents/impeccable-*
+.claude/settings.local.json
+skills-lock.json
+.impeccable/questions/
+.impeccable/hook.cache.json
