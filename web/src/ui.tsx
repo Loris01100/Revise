@@ -1,5 +1,5 @@
 import { For, createEffect, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
-import { api, type Card, type Color } from "./api";
+import { api, type Card, type CardType, type Color } from "./api";
 
 // --- Navigation : quelques chemins, sans routeur ---
 
@@ -36,13 +36,22 @@ export function Link(p: { href: string; class?: string; children: JSX.Element; "
 
 // --- Réglages, gardés sur l'appareil ---
 
-export type Settings = { minutes: number; autoReveal: boolean; delay: number; theme: "auto" | "light" | "dark" };
+export type Settings = {
+  minutes: number;
+  autoReveal: boolean;
+  delay: number;
+  theme: "auto" | "light" | "dark";
+  importCount: number;
+  importTypes: CardType[];
+};
 const SKEY = "revise.settings";
 const [settings, setSettingsSignal] = createSignal<Settings>({
   minutes: 15,
   autoReveal: false,
   delay: 60,
   theme: "auto",
+  importCount: 20,
+  importTypes: ["qa", "cloze", "mcq", "explain"],
   ...JSON.parse(localStorage.getItem(SKEY) ?? "{}"),
 });
 export { settings };

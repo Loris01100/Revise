@@ -11,6 +11,7 @@ export type Card = {
   answer: string;
   choices: string[] | null;
   explanation: string | null;
+  source_page?: number | null;
   status?: "draft" | "active" | "suspended";
 };
 export type Parked = { id: string; text: string; session_id: string | null };
@@ -18,7 +19,10 @@ export type Parked = { id: string; text: string; session_id: string | null };
 export class Offline extends Error {}
 export class Expired extends Error {}
 export class Failed extends Error {
-  constructor(readonly status: number) {
+  constructor(
+    readonly status: number,
+    readonly body?: any,
+  ) {
     super(String(status));
   }
 }
@@ -42,7 +46,7 @@ export async function api<T = void>(method: string, path: string, body?: unknown
     setExpired(true);
     throw new Expired();
   }
-  if (!res.ok) throw new Failed(res.status);
+  if (!res.ok) throw new Failed(res.status, await res.json().catch(() => null));
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 

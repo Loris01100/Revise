@@ -205,10 +205,11 @@ Vérification du rendu :
 
 ### 3.4 Frontend
 
-- [ ] Design : `/journey` (copier le prompt → Claude → coller → relecture), `/wireframe` Import et Relecture, `/fortify` (JSON invalide, cartes rejetées, collage vide), `/articulate` (consignes et erreurs)
-- [ ] **Import** : choix matière / nombre / types (question / réponse, texte à trous, QCM, réponse longue), bouton « Copier le prompt », zone de collage
-- [ ] **Relecture** : cartes brouillon une par une → accepter / modifier / supprimer
-- [ ] Seules les cartes acceptées reçoivent un `card_state` et entrent en révision
+- [x] Design : `/journey` (copier le prompt → Claude → coller → relecture), `/wireframe` Import et Relecture, `/fortify` (JSON invalide, cartes rejetées, collage vide), `/articulate` (consignes et erreurs)
+- [x] **Import** : choix matière / nombre / types (question / réponse, texte à trous, QCM, réponse longue), bouton « Copier le prompt », zone de collage
+- [x] **Relecture** : cartes brouillon une par une → accepter / modifier / supprimer
+  - Entrée depuis la matière (`/matieres/:id/import`, `/matieres/:id/relecture`) ; brouillons en attente signalés dans la matière ; suppression annulable, sans confirmation
+- [x] Seules les cartes acceptées reçoivent un `card_state` et entrent en révision
 - [ ] `/impeccable critique`, `audit` et `polish` sur Import et Relecture
 
 ### 3.5 Vérification

@@ -75,7 +75,7 @@ api.post("/subjects", async (c) => {
 // Page d'une matière : toutes ses cartes, la recherche se fait côté client
 api.get("/subjects/:id/cards", async (c) => {
   const { results } = await c.env.DB.prepare(
-    `SELECT c.id, c.type, c.question, c.answer, c.choices, c.explanation, c.status, c.created_at, cs.due
+    `SELECT c.id, c.type, c.question, c.answer, c.choices, c.explanation, c.source_page, c.status, c.created_at, cs.due
      FROM cards c LEFT JOIN card_state cs ON cs.card_id = c.id
      WHERE c.subject_id = ? ORDER BY c.created_at, c.rowid`,
   )
@@ -127,7 +127,7 @@ api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ 
   if (!subject) return notFound(c);
 
   const { results } = await c.env.DB.prepare("SELECT question FROM cards WHERE subject_id = ?").bind(b.subject_id).all<{ question: string }>();
-  let report: { cards: Record<string, unknown>[]; rejected: { index: number; reason: string }[] };
+  let report: { cards: Record<string, unknown>[]; rejected: { index: number; question: string | null; reason: string }[] };
   try {
     report = JSON.parse(validate_cards(b.text, JSON.stringify(results.map((r) => r.question))));
   } catch (e) {

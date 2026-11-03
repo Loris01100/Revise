@@ -236,3 +236,33 @@
 - Why: une clé API se facture à part de l'abonnement Claude ; pour une seule personne, un copier-coller de plus coûte moins qu'un crédit à surveiller. Claude lit lui-même le PDF ou le DOCX, ce qui supprime aussi l'extraction DOCX, le stockage R2 et le quota.
 - Rejected: l'API Claude (environ 0,15 $ par cours avec Sonnet 5.5), gardée en phase 4 si le copier-coller devient pénible.
 - Rests on: estimation du coût par cours du 2026-11-03.
+
+## 2026-11-03 · L'import part de la matière, sans choix de matière à l'écran d'import
+- Decided by: Claude, par défaut
+- Why: les cartes appartiennent à une matière ; la choisir une seconde fois ajoute une décision sans rien apprendre. La matière est dans l'adresse et survit au rechargement de l'onglet au retour de Claude.
+- Rejected: un sélecteur de matière en tête de l'écran d'import (ETAPES.md, 3.4).
+- Rests on: journey-import.md, Matière.
+
+## 2026-11-03 · Pas de « Tout accepter » à la relecture
+- Decided by: Claude, par défaut
+- Why: accepter sans lire viderait la relecture de son sens ; le focus sur « Accepter » à chaque carte garde une carte juste à une touche.
+- Rejected: « Accepter les cartes restantes » en action secondaire. À revoir si l'essai de l'étape 3.5 dépasse 5 min.
+- Rests on: brief-revise.md, « Rien n'entre sans accord » ; journey-import.md, Open Questions.
+
+## 2026-11-03 · Supprimer un brouillon : sans confirmation, annulable jusqu'à l'action suivante
+- Decided by: Claude, par défaut
+- Why: un brouillon n'a pas d'historique ; une confirmation à chaque refus ralentirait la relecture. La suppression part à l'action suivante, si bien qu'un onglet fermé laisse la carte en brouillon, jamais acceptée à tort.
+- Rejected: la confirmation de Matières (« Son historique de révision sera perdu »), qui ne s'applique pas.
+- Rests on: journey-import.md, Interaction Specifications.
+
+## 2026-11-03 · Modifier une carte en relecture l'accepte
+- Decided by: Claude, par défaut
+- Why: corriger une carte vaut accord ; un second geste « Accepter » après l'enregistrement serait redondant.
+- Rejected: enregistrer puis revenir à la carte pour l'accepter.
+- Rests on: wireframes-import.html, Relecture — modifier.
+
+## 2026-11-03 · Les raisons de rejet sont celles du cœur Rust, affichées telles quelles
+- Decided by: Claude, par défaut
+- Why: elles sont déjà en français et nomment le champ fautif, ce qui permet de les recopier à Claude ; une seconde table de traduction dans le frontend dériverait.
+- Rejected: reformuler chaque raison côté interface.
+- Rests on: copy-import.md, Rapport d'import.

@@ -1,7 +1,7 @@
 import { For, Index, Show, createEffect, createResource, createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { api, type Card, type CardType, type Color, type Subject } from "./api";
-import { COLORS, Confirm, Dialog, Icon, Link, TYPES, announce, arrows, go, hl, plain, start } from "./ui";
+import { COLORS, Confirm, Dialog, Icon, Link, TYPES, announce, arrows, go, hl, one, plain, start } from "./ui";
 
 const STATUS: Record<string, string> = { active: "Active", suspended: "Suspendue", draft: "Brouillon" };
 const norm = (s: string) =>
@@ -20,6 +20,7 @@ export default function Subjects(p: { id?: string }) {
     (id) => api<Card[]>("GET", `/subjects/${id}/cards`),
   );
   const reload = () => Promise.all([reloadCards(), reloadSubjects()]);
+  const drafts = () => (cards.latest ?? []).filter((c) => c.status === "draft").length;
   // Rangées réconciliées par id : un rechargement garde les mêmes nœuds, donc le focus
   const [rows, setRows] = createStore<Card[]>([]);
   createEffect(() => setRows(reconcile(cards.latest ?? [], { key: "id" })));
@@ -136,6 +137,11 @@ export default function Subjects(p: { id?: string }) {
                       <Icon name="plus" />
                       Ajouter une carte
                     </button>
+                    <Show when={s().cards > 0 || drafts() > 0}>
+                      <Link href={`/matieres/${s().id}/import`} class="btn">
+                        Importer des cartes
+                      </Link>
+                    </Show>
                     <Show when={s().cards > 0}>
                       <button class="btn primary" onClick={() => revise(s())}>
                         Réviser cette matière
@@ -148,6 +154,16 @@ export default function Subjects(p: { id?: string }) {
                     La session n'a pas pu démarrer.
                   </p>
                 </Show>
+                <Show when={drafts()}>
+                  {(n) => (
+                    <p class="notice drafts">
+                      {one(n()) ? "1 carte importée attend ta relecture." : `${n()} cartes importées attendent ta relecture.`}{" "}
+                      <Link href={`/matieres/${s().id}/relecture`} class="btn small">
+                        Relire
+                      </Link>
+                    </p>
+                  )}
+                </Show>
 
                 <Show
                   when={(cards.latest?.length ?? 0) > 0}
@@ -155,9 +171,14 @@ export default function Subjects(p: { id?: string }) {
                     <Show when={!cards.loading}>
                       <div class="empty">
                         <p>Pas encore de carte dans cette matière.</p>
-                        <button class="btn primary" onClick={() => setEditing("new")}>
-                          Ajouter une carte
-                        </button>
+                        <div class="inline">
+                          <Link href={`/matieres/${s().id}/import`} class="btn primary">
+                            Importer des cartes
+                          </Link>
+                          <button class="btn" onClick={() => setEditing("new")}>
+                            Ajouter une carte
+                          </button>
+                        </div>
                       </div>
                     </Show>
                   }
@@ -213,7 +234,7 @@ export default function Subjects(p: { id?: string }) {
                                     class="link"
                                     onClick={() => (c.status === "active" ? suspend(c) : act(() => status(c, "active")))}
                                   >
-                                    {c.status === "active" ? "Suspendre" : "Réactiver"}
+                                    {c.status === "active" ? "Suspendre" : c.status === "draft" ? "Accepter" : "Réactiver"}
                                   </button>
                                   <button class="link" onClick={() => (setToast(null), setDeleting(c))}>
                                     Supprimer
@@ -358,7 +379,8 @@ function SubjectForm(p: { used: (Color | null)[]; onClose: () => void; onCreated
   );
 }
 
-function CardForm(p: { subject: Subject; card?: Card; onSaved: () => void; onClose: () => void }) {
+/** `accept` : relecture d'un brouillon, l'enregistrement l'accepte aussi. */
+export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; onSaved: () => void; onClose: () => void }) {
   const c = p.card;
   const initChoices = [...(c?.choices ?? []), "", "", "", ""].slice(0, 4);
   const [type, setType] = createSignal<CardType>(c?.type ?? "qa");
@@ -399,6 +421,7 @@ function CardForm(p: { subject: Subject; card?: Card; onSaved: () => void; onClo
       answer: mcq ? choices()[correct()].trim() : answer().trim(),
       choices: mcq ? choices().map((x) => x.trim()).filter(Boolean) : null,
       explanation: explanation().trim() || null,
+      ...(p.accept && { status: "active" }),
     };
     setBusy(true);
     setFailed(false);
@@ -562,7 +585,7 @@ function CardForm(p: { subject: Subject; card?: Card; onSaved: () => void; onClo
             </button>
           </Show>
           <button class="btn primary" disabled={busy()}>
-            {c ? "Enregistrer" : "Ajouter"}
+            {p.accept ? "Enregistrer et accepter" : c ? "Enregistrer" : "Ajouter"}
           </button>
         </div>
       </form>

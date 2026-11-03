@@ -1033,6 +1033,146 @@ p.empty {
   padding-left: 24px;
 }
 
+/* --- Import --- */
+
+.col.wide {
+  width: min(680px, 100% - 2 * var(--gutter));
+  margin-top: clamp(32px, 8vh, 80px);
+}
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.steps > li {
+  position: relative;
+  padding-left: 48px;
+  counter-increment: step;
+}
+.steps > li + li {
+  margin-top: 48px;
+}
+/* Le numéro dit l'ordre des gestes, qui passe par Claude entre le 1 et le 3 */
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.steps h2 {
+  margin-bottom: 16px;
+  font-size: 19px;
+  line-height: 28px;
+}
+.steps h2 + .muted {
+  max-width: 60ch;
+}
+.prompt-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 40px;
+  margin-bottom: 8px;
+}
+.field.count {
+  width: 7em;
+  font-variant-numeric: tabular-nums;
+}
+.types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+.steps .hint:empty {
+  display: none;
+}
+.prompt {
+  margin-top: 12px;
+}
+.prompt summary,
+.rejected summary {
+  width: fit-content;
+  padding-block: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.prompt .field {
+  margin-top: 8px;
+  font-size: 15px;
+}
+.field.paste {
+  min-height: 12em;
+  font-size: 15px;
+}
+.steps .error-text + .btn {
+  margin-top: 12px;
+}
+.report .lead-title {
+  margin-bottom: 8px;
+}
+.report > .muted {
+  margin-bottom: 32px;
+}
+.report > .btn.lg:not(.block) {
+  margin-top: 24px;
+}
+.rejected {
+  margin: 40px 0 32px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+.rejected ul {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+  max-width: 68ch;
+}
+.notice.drafts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: -8px 0 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sheet);
+}
+
+/* --- Relecture --- */
+
+.review .bar .back {
+  min-width: 0;
+  margin-left: -12px;
+}
+.review-acts {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 8px;
+}
+
 /* --- Téléphone --- */
 
 @media (max-width: 800px) {
@@ -1089,6 +1229,12 @@ p.empty {
   }
 }
 @media (max-width: 600px) {
+  .review-acts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .review-acts .primary {
+    grid-column: 1 / -1;
+  }
   .grades {
     grid-template-columns: 1fr 1fr;
   }
@@ -1102,7 +1248,8 @@ p.empty {
     border-color: var(--ink);
     color: var(--on-ink);
   }
-  .bar .wide {
+  .bar .wide,
+  .top .wide {
     display: none;
   }
   .bar .btn.small {

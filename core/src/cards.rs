@@ -23,10 +23,11 @@ pub struct Card {
     pub source_page: Option<u32>,
 }
 
-/// Carte refusée : sa position dans le tableau collé (à partir de 0) et la raison.
+/// Carte refusée : sa position dans le tableau collé (à partir de 0), sa question si elle en a une, et la raison.
 #[derive(Debug, Serialize, PartialEq)]
 pub struct Rejected {
     pub index: usize,
+    pub question: Option<String>,
     pub reason: String,
 }
 
@@ -54,7 +55,10 @@ pub fn validate(text: &str, existing: &[String]) -> Result<Report, String> {
                 seen.insert(key(&c.question), Some(index));
                 report.cards.push(c);
             }
-            Err(reason) => report.rejected.push(Rejected { index, reason }),
+            Err(reason) => {
+                let question = item["question"].as_str().map(|q| q.trim().to_string()).filter(|q| !q.is_empty());
+                report.rejected.push(Rejected { index, question, reason })
+            }
         }
     }
     Ok(report)
@@ -228,8 +232,8 @@ mod tests {
         let r = validate(lot, &["Qui sont les EA?".into()]).unwrap();
         assert_eq!(r.cards.len(), 1);
         assert_eq!(r.rejected, vec![
-            Rejected { index: 1, reason: "doublon de la carte 1".into() },
-            Rejected { index: 2, reason: "question déjà présente dans la matière".into() },
+            Rejected { index: 1, question: Some("que signifie  OPC".into()), reason: "doublon de la carte 1".into() },
+            Rejected { index: 2, question: Some("Qui sont les EA ?".into()), reason: "question déjà présente dans la matière".into() },
         ]);
     }
 }
