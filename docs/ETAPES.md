@@ -95,12 +95,12 @@ Sur chaque route `/api/*` :
   - [x] Crate : **`rs-fsrs` 1.2** — compile en `wasm32-unknown-unknown` (`fsrs` 6.6 échoue : `getrandom` sans `wasm_js`, et embarque `burn`). `Card::new()` et `Parameters::default()` lisent l'horloge (`Utc::now()`, qui passe par `Date.now()` grâce à la feature `wasmbind` de chrono) ; `schedule` construit la carte elle-même pour rester pure en `now`
   - [x] Rétention cible : 90 %
   - [x] Notes : 1 « à revoir », 2 « difficile », 3 « bien », 4 « facile »
-- [ ] `src/session.rs` : composition d'une session
-  - [ ] Tri des cartes dues par date
-  - [ ] Limite de cartes nouvelles (défaut 10/jour)
-  - [ ] Alternance des matières et des types de questions
-  - [ ] Mode `quick5` : les 5 cartes les plus en retard
-- [ ] Tests `cargo test` sur FSRS et la composition de session
+- [x] `src/session.rs` : composition d'une session
+  - [x] Tri des cartes dues par date
+  - [x] Limite de cartes nouvelles (défaut 10/jour) — le Worker passe le quota restant du jour
+  - [x] Alternance des matières et des types de questions
+  - [x] Mode `quick5` : les 5 cartes les plus en retard
+- [x] Tests `cargo test` sur FSRS et la composition de session
 - [ ] `wasm-pack build core --target bundler` et import dans le Worker
 
 ### 2.2 API (`worker/src/routes/`)
