@@ -121,7 +121,8 @@ Sur chaque route `/api/*` :
 - [x] `POST /api/sessions/:id/end` — clôturer (idempotent) et renvoyer le bilan avec les pensées non traitées
 - [x] `POST /api/parked` — noter une pensée parasite
 - [x] `PATCH /api/parked/:id` — « Fait » au bilan
-- [ ] Clôture automatique d'une session sans note depuis 30 min ([decisions.md](design/decisions.md))
+- [x] Clôture automatique d'une session sans note depuis 30 min ([decisions.md](design/decisions.md))
+  - [x] Faite à l'ouverture de la session suivante ; `ended_at` = heure de la dernière note (ou de l'ouverture si aucune)
 
 ### 2.3 Design (avant le code de l'interface)
 

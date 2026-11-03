@@ -160,6 +160,16 @@ api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ 
   return c.json({ cards, rejected: report.rejected }, 201);
 });
 
+// Session sans note depuis IDLE_MS : close à l'heure de sa dernière note (ou de son ouverture), sans message
+// ponytail: close à l'ouverture de la session suivante, pas de cron ; en ajouter un si un écran lit ended_at entre-temps
+const IDLE_MS = 30 * 60_000;
+const closeIdle = (db: D1Database, user: string, t: string) => {
+  const last = "COALESCE((SELECT MAX(reviewed_at) FROM reviews WHERE session_id = sessions.id), started_at)";
+  return db
+    .prepare(`UPDATE sessions SET ended_at = ${last} WHERE user_id = ? AND ended_at IS NULL AND ${last} < ?`)
+    .bind(user, new Date(Date.parse(t) - IDLE_MS).toISOString());
+};
+
 // Ouvre une session et renvoie sa file ; rien à réviser = pas de session créée
 api.post("/sessions", async (c) => {
   const b = await body(c);
@@ -172,7 +182,8 @@ api.post("/sessions", async (c) => {
   // ponytail: jour UTC, le quota repart à 1 h ou 2 h à Paris ; passer au minuit local si ça gêne
   const day = t.slice(0, 10);
   const user = c.var.user;
-  const [, cands, seen] = await c.env.DB.batch<Record<string, any>>([
+  const [, , cands, seen] = await c.env.DB.batch<Record<string, any>>([
+    closeIdle(c.env.DB, user, t),
     ensureStates(c.env.DB, user, t),
     c.env.DB.prepare(
       `SELECT c.id, c.subject_id, c.type, c.question, c.answer, c.choices, c.explanation,
