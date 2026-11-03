@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
+import { For, Show, createEffect, createResource, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
 import { api, type Card, type CardType, type Color } from "./api";
 
 // --- Navigation : quelques chemins, sans routeur ---
@@ -120,8 +120,9 @@ export const COLORS: [Color, string][] = [
 ];
 export const hl = (c: Color | null | undefined) => `--hl: var(--hl-${c ?? "yellow"})`;
 
-/** Texte sans les marques `==…==`. */
-export const plain = (s: string) => s.replace(/==(.+?)==/g, "$1");
+const DRAWING = /!\[dessin\]\([0-9a-f-]{36}\)/g;
+/** Texte sans les marques `==…==`, dessins remplacés par « (dessin) ». */
+export const plain = (s: string) => s.replace(/==(.+?)==/g, "$1").replace(DRAWING, "(dessin)");
 
 /** Texte dont les passages `==…==` reçoivent le trait de surligneur. */
 export function Marked(p: { text: string; draw?: boolean }) {
@@ -132,13 +133,15 @@ export function Marked(p: { text: string; draw?: boolean }) {
   );
 }
 
-/** Texte de carte : ```lang … ``` en bloc de code, ```mermaid … ``` en schéma, `…` en code ; le reste passe par Marked.
+/** Texte de carte : ```lang … ``` en bloc de code, ```mermaid … ``` en schéma, `…` en code, ![dessin](id) en dessin ;
+ *  le reste passe par Marked.
  *  Tout est en <code>/<span> pour rester valide dans le <h1> de la question et le <p> de la réponse. */
 export function Rich(p: { text: string; draw?: boolean }) {
   return (
     <>
-      {p.text.split(/(```[^\n]*\n[\s\S]*?```|`[^`\n]+`)/).map((s, i) => {
+      {p.text.split(/(```[^\n]*\n[\s\S]*?```|`[^`\n]+`|!\[dessin\]\([0-9a-f-]{36}\))/).map((s, i) => {
         if (i % 2 === 0) return <Marked text={s} draw={p.draw} />;
+        if (s.startsWith("![")) return <Drawing id={s.slice(10, -1)} />;
         const m = s.match(/^```([^\n]*)\n([\s\S]*?)\n?```$/);
         if (!m) return <code>{s.slice(1, -1)}</code>;
         const lang = m[1].trim();
@@ -186,6 +189,50 @@ function Diagram(p: { src: string }) {
   );
 }
 
+/** Forme d'un dessin : `p` est une suite x, y sur une grille 600 × 400 (deux points, sauf le crayon). */
+export type Shape = { t: "pen" | "line" | "arrow" | "rect" | "ellipse"; p: number[] };
+
+/** Dessin reconstruit à partir des seules coordonnées, jamais d'un SVG stocké. */
+export function Sketch(p: { shapes: Shape[]; children?: JSX.Element }) {
+  return (
+    <svg class="sketch" viewBox="0 0 600 400" role="img" aria-label="Dessin">
+      <For each={p.shapes}>
+        {(s) => {
+          const [x1, y1, x2, y2] = s.p;
+          if (s.t === "pen") return <polyline points={s.p.join(" ")} />;
+          if (s.t === "rect") return <rect x={Math.min(x1, x2)} y={Math.min(y1, y2)} width={Math.abs(x2 - x1)} height={Math.abs(y2 - y1)} />;
+          if (s.t === "ellipse")
+            return <ellipse cx={(x1 + x2) / 2} cy={(y1 + y2) / 2} rx={Math.abs(x2 - x1) / 2} ry={Math.abs(y2 - y1) / 2} />;
+          if (s.t === "line") return <line x1={x1} y1={y1} x2={x2} y2={y2} />;
+          const a = Math.atan2(y2 - y1, x2 - x1);
+          const head = (d: number) => `${x2 - 16 * Math.cos(a + d)},${y2 - 16 * Math.sin(a + d)}`;
+          return <polyline points={`${x1},${y1} ${x2},${y2} ${head(0.45)} ${x2},${y2} ${head(-0.45)}`} />;
+        }}
+      </For>
+      {p.children}
+    </svg>
+  );
+}
+
+// Un dessin ne change jamais : chargé une fois par page
+const drawings = new Map<string, Promise<Shape[]>>();
+function Drawing(p: { id: string }) {
+  const [shapes] = createResource(
+    () => p.id,
+    (id) => {
+      if (!drawings.has(id)) drawings.set(id, api<{ shapes: Shape[] }>("GET", `/drawings/${id}`).then((r) => r.shapes));
+      return drawings.get(id)!.catch((e) => (drawings.delete(id), Promise.reject(e)));
+    },
+  );
+  return (
+    <span class="drawing">
+      <Show when={!shapes.error} fallback={<span class="muted">Dessin indisponible</span>}>
+        <Show when={shapes()}>{(s) => <Sketch shapes={s()} />}</Show>
+      </Show>
+    </span>
+  );
+}
+
 /** Aperçu rendu d'un champ de carte qui contient du code ou un schéma, mis à jour après la frappe. */
 export function Preview(p: { text: string }) {
   const [text, setText] = createSignal(p.text);
@@ -194,7 +241,7 @@ export function Preview(p: { text: string }) {
     onCleanup(() => clearTimeout(t));
   });
   return (
-    <Show when={text().includes("`")}>
+    <Show when={/`|!\[dessin\]\(/.test(text())}>
       <div class="preview" aria-label="Aperçu" role="group">
         <Rich text={text()} />
       </div>

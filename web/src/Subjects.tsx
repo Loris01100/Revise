@@ -1,6 +1,7 @@
 import { For, Index, Show, createEffect, createResource, createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { api, type Card, type CardType, type Color, type Subject } from "./api";
+import { DrawDialog } from "./Draw";
 import { COLORS, Confirm, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, one, plain, start } from "./ui";
 
 const STATUS: Record<string, string> = { active: "Active", suspended: "Suspendue", draft: "Brouillon" };
@@ -398,6 +399,20 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
   const close = () => (snapshot() !== initial ? setLeaving(true) : p.onClose());
   let form!: HTMLFormElement;
 
+  // Dessin en cours pour un champ : sa référence s'insère au curseur
+  const [drawFor, setDrawFor] = createSignal<[string, (v: string) => void] | null>(null);
+  function insertDrawing(id: string) {
+    const [field, set] = drawFor()!;
+    const el = document.getElementById(field) as HTMLTextAreaElement;
+    set(el.value.slice(0, el.selectionEnd) + `![dessin](${id})` + el.value.slice(el.selectionEnd));
+    setDrawFor(null);
+  }
+  const DrawButton = (q: { field: string; set: (v: string) => void }) => (
+    <button type="button" class="link draw-add" onClick={() => setDrawFor([q.field, q.set])}>
+      Ajouter un dessin
+    </button>
+  );
+
   function validate() {
     const e: Record<string, string> = {};
     if (!question().trim()) e.question = "Écris la question.";
@@ -500,6 +515,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           aria-describedby="question-err question-hint"
         />
         <Preview text={question()} />
+        <DrawButton field="f-question" set={setQuestion} />
         <Show when={type() === "cloze"}>
           <p id="question-hint" class="hint">
             Marque le mot à retrouver avec ___.
@@ -528,6 +544,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
                 aria-describedby="answer-err answer-hint"
               />
               <Preview text={answer()} />
+              <DrawButton field="f-answer" set={setAnswer} />
               <p id="answer-hint" class="hint">
                 Entoure le terme clé de == pour le surligner à la correction : ==élasticité==.
               </p>
@@ -577,6 +594,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           onInput={(e) => setExplanation(e.currentTarget.value)}
         />
         <Preview text={explanation()} />
+        <DrawButton field="f-explanation" set={setExplanation} />
 
         <div class="actions">
           <button type="button" class="btn quiet" onClick={close}>
@@ -593,6 +611,9 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
         </div>
       </form>
 
+      <Show when={drawFor()}>
+        <DrawDialog onDone={insertDrawing} onClose={() => setDrawFor(null)} />
+      </Show>
       <Show when={leaving()}>
         <Confirm
           title={c ? "Abandonner les modifications ?" : "Abandonner cette carte ?"}

@@ -851,6 +851,59 @@ a.row:hover {
   color: var(--error);
   font-family: inherit;
 }
+/* Dessins : trait à la couleur du texte, sur la feuille */
+.sketch {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drawing {
+  display: block;
+  max-width: 480px;
+  margin: 12px 0;
+  border-radius: var(--r);
+  background: var(--sheet);
+  font-size: 15px;
+  font-weight: 400;
+}
+.drawing .muted {
+  display: block;
+  padding: 12px 14px;
+}
+.draw-add {
+  display: block;
+  margin-top: 8px;
+  font-size: 15px;
+}
+dialog.draw {
+  width: min(760px, 100vw - 32px);
+}
+.draw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.canvas {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sheet);
+  cursor: crosshair;
+  touch-action: none;
+}
+dialog.draw .actions {
+  margin-top: 20px;
+}
 /* Réponse tapée sur une carte de code */
 .field.code {
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;

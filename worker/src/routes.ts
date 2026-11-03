@@ -250,4 +250,34 @@ api.patch("/parked/:id", async (c) => {
   return res.meta.changes ? c.body(null, 204) : notFound(c);
 });
 
+// Dessins : uniquement des coordonnées entières, le SVG est reconstruit côté client
+const SHAPES = ["pen", "line", "arrow", "rect", "ellipse"];
+const shapesOk = (v: any) =>
+  Array.isArray(v) &&
+  v.length > 0 &&
+  v.length <= 500 &&
+  v.every(
+    (s) =>
+      SHAPES.includes(s?.t) &&
+      Array.isArray(s.p) &&
+      s.p.length >= 4 &&
+      s.p.length % 2 === 0 &&
+      s.p.length <= (s.t === "pen" ? 4000 : 4) &&
+      s.p.every((x: unknown) => Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 600),
+  );
+
+api.post("/drawings", bodyLimit({ maxSize: 512 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
+  const b = await body(c);
+  if (!shapesOk(b.shapes)) return bad(c, "shapes");
+  const id = crypto.randomUUID();
+  const shapes = JSON.stringify(b.shapes.map(({ t, p }: { t: string; p: number[] }) => ({ t, p })));
+  await c.env.DB.prepare("INSERT INTO drawings (id, shapes, created_at) VALUES (?, ?, ?)").bind(id, shapes, now()).run();
+  return c.json({ id }, 201);
+});
+
+api.get("/drawings/:id", async (c) => {
+  const row = await c.env.DB.prepare("SELECT shapes FROM drawings WHERE id = ?").bind(c.req.param("id")).first<{ shapes: string }>();
+  return row ? c.json({ shapes: JSON.parse(row.shapes) }) : notFound(c);
+});
+
 export default api;

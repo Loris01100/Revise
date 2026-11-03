@@ -226,7 +226,9 @@ Vérification du rendu :
 - [x] Éditeur et relecture : aperçu rendu sous chaque champ qui contient du code
 - [ ] Vérifier dans le navigateur : schéma clair/sombre, aperçu, `Tab`
 - [x] Coloration syntaxique : Shiki chargé à la demande, thèmes GitHub clair/sombre via `light-dark()`, texte brut si langage inconnu
-- [ ] Dessin à main levée et formes simples (outil SVG maison, dessins dans une table à part, carte → `![dessin](id)`)
+- [x] Dessin à main levée et formes simples : crayon, trait, flèche, rectangle, ellipse ; table `drawings` (migration 0002), carte → `![dessin](id)`, SVG reconstruit depuis les coordonnées
+- [ ] Migration 0002 sur la base distante : `wrangler d1 migrations apply revise --remote`
+- [ ] Dessins : modifier un dessin existant, texte dans le dessin, suppression des dessins orphelins
 - [ ] Trous `___` dans du code
 - [ ] Mermaid en cache hors ligne (avec la PWA)
 
