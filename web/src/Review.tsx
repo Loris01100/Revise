@@ -19,60 +19,52 @@ export default function Review(p: { id: string }) {
   const [i, setI] = createSignal(0);
   const [accepted, setAccepted] = createSignal(0);
   const [deleted, setDeleted] = createSignal(0);
-  const [failed, setFailed] = createSignal(false);
-  const [busy, setBusy] = createSignal(false);
   const [editing, setEditing] = createSignal(false);
   const cards = () => queue() ?? [];
   const card = () => cards()[i()];
   const done = () => queue.state === "ready" && cards().length > 0 && i() >= cards().length;
 
-  // Suppression différée jusqu'à l'action suivante : « Annuler » n'a rien à recréer.
+  // Acceptation et suppression différées jusqu'à l'action suivante : « Annuler » n'a rien à défaire côté serveur.
   // Un échec ou un onglet fermé laisse la carte en brouillon, elle reviendra à la prochaine relecture.
-  const [trash, setTrash] = createSignal<Card | null>(null);
-  const commit = () => {
-    const t = trash();
-    setTrash(null);
-    if (t) void api("DELETE", `/cards/${t.id}`).catch(() => {});
+  const [pending, setPending] = createSignal<{ card: Card; act: "accept" | "delete" } | null>(null);
+  const [lost, setLost] = createSignal(false);
+  const commit = async () => {
+    const t = pending();
+    setPending(null);
+    if (t?.act === "delete") void api("DELETE", `/cards/${t.card.id}`).catch(() => {});
+    if (t?.act === "accept")
+      await api("PATCH", `/cards/${t.card.id}`, { status: "active" }).catch(() => {
+        setAccepted(accepted() - 1);
+        setLost(true);
+      });
   };
   onCleanup(commit);
   addEventListener("pagehide", commit);
   onCleanup(() => removeEventListener("pagehide", commit));
 
   const next = () => setI(i() + 1);
-  async function accept() {
-    if (busy()) return;
-    commit();
-    setBusy(true);
-    setFailed(false);
-    try {
-      await api("PATCH", `/cards/${card().id}`, { status: "active" });
-      setAccepted(accepted() + 1);
-      next();
-    } catch {
-      setFailed(true);
-    } finally {
-      setBusy(false);
-    }
-  }
-  function remove() {
-    commit();
-    setFailed(false);
-    setTrash(card());
-    setDeleted(deleted() + 1);
+  function act(a: "accept" | "delete") {
+    void commit();
+    setLost(false);
+    setPending({ card: card(), act: a });
+    a === "accept" ? setAccepted(accepted() + 1) : setDeleted(deleted() + 1);
     next();
   }
   function undo() {
-    setTrash(null);
-    setDeleted(deleted() - 1);
+    const a = pending()?.act;
+    setPending(null);
+    a === "accept" ? setAccepted(accepted() - 1) : setDeleted(deleted() - 1);
     setI(i() - 1);
   }
 
   // Le focus revient sur « Accepter » à chaque carte : une carte juste coûte une touche
   let acceptBtn: HTMLButtonElement | undefined;
   let endBtn: HTMLButtonElement | undefined;
+  let shownAt = 0;
   createEffect(
     on([i, () => queue.state], () => {
       if (queue.state !== "ready") return;
+      shownAt = performance.now();
       queueMicrotask(() => (done() ? endBtn : acceptBtn)?.focus({ preventScroll: true }));
       if (card()) announce(`Carte ${i() + 1} sur ${cards().length}.`);
       scrollTo(0, 0);
@@ -81,7 +73,10 @@ export default function Review(p: { id: string }) {
 
   onMount(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !document.querySelector("dialog[open]")) go(back);
+      if (document.querySelector("dialog[open]")) return;
+      if (e.key === "Escape") go(back);
+      // Entrée tenue ou frappée sur l'élan de la carte précédente : la nouvelle carte n'a pas encore été lue
+      if (e.key === "Enter" && (e.repeat || performance.now() - shownAt < 400)) e.preventDefault();
     };
     addEventListener("keydown", key);
     onCleanup(() => removeEventListener("keydown", key));
@@ -91,6 +86,7 @@ export default function Review(p: { id: string }) {
   async function revise() {
     setStartFailed(false);
     try {
+      await commit();
       if (!(await start({ mode: "subject", subject_id: p.id }))) go(back);
     } catch {
       setStartFailed(true);
@@ -103,7 +99,9 @@ export default function Review(p: { id: string }) {
         <div class="bar-start">
           <Link href={back} class="btn quiet small back">
             <Icon name="back" />
-            <span class="subject">{subject()?.name ?? "Matière"}</span>
+            <span class="subject">
+              <mark>{subject()?.name ?? "Matière"}</mark>
+            </span>
             <span class="sr-only">, retour à la matière</span>
           </Link>
         </div>
@@ -126,7 +124,7 @@ export default function Review(p: { id: string }) {
               <Show
                 when={accepted()}
                 fallback={
-                  <button ref={endBtn} class="btn primary lg block" onClick={() => go(`${back}/import`)}>
+                  <button ref={endBtn} class="btn primary lg block" onClick={() => commit().then(() => go(`${back}/import`))}>
                     Importer un autre lot
                   </button>
                 }
@@ -135,7 +133,7 @@ export default function Review(p: { id: string }) {
                   Réviser cette matière
                 </button>
               </Show>
-              <button class="btn block" onClick={() => go(back)}>
+              <button class="btn block" onClick={() => commit().then(() => go(back))}>
                 Retour à la matière
               </button>
             </div>
@@ -189,19 +187,22 @@ export default function Review(p: { id: string }) {
               </Show>
 
               <div class="grades-dock">
-                <Show when={failed()}>
+                <Show when={lost()}>
                   <p class="notice error" role="alert">
-                    La carte n'a pas été acceptée. Réessaie.
+                    La carte précédente n'a pas été acceptée. Elle reviendra à la prochaine relecture.
                   </p>
                 </Show>
                 <div class="review-acts">
-                  <button ref={acceptBtn} class="btn primary lg" onClick={accept} disabled={busy()}>
-                    Accepter<span class="key">Entrée</span>
+                  <button ref={acceptBtn} class="btn primary lg" onClick={() => act("accept")} aria-keyshortcuts="Enter">
+                    Accepter
+                    <span class="key" aria-hidden="true">
+                      Entrée
+                    </span>
                   </button>
-                  <button class="btn lg" onClick={() => (commit(), setFailed(false), setEditing(true))}>
+                  <button class="btn lg" onClick={() => (void commit(), setLost(false), setEditing(true))}>
                     Modifier
                   </button>
-                  <button class="btn lg" onClick={remove}>
+                  <button class="btn lg" onClick={() => act("delete")}>
                     Supprimer
                   </button>
                 </div>
@@ -230,9 +231,9 @@ export default function Review(p: { id: string }) {
         </Match>
       </Switch>
 
-      <Show when={trash()}>
+      <Show when={pending()}>
         <div class="toast" role="status">
-          Carte supprimée.
+          {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}
           <button class="link" onClick={undo}>
             Annuler
           </button>

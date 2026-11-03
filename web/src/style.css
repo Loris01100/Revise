@@ -482,6 +482,15 @@ dialog.card-form {
 dialog.card-form .chips {
   margin-bottom: 24px;
 }
+/* Le pied reste au bas du dialogue pendant qu'on fait défiler le formulaire */
+dialog.card-form .actions {
+  position: sticky;
+  bottom: 0;
+  margin: 28px -28px -28px;
+  padding: 16px 28px 28px;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
 .confirm p {
   margin-top: -8px;
 }
@@ -1064,10 +1073,19 @@ p.empty {
   width: 30px;
   height: 30px;
   border: 1px solid var(--line);
-  border-radius: 50%;
+  border-radius: var(--r);
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+/* Étape faite : aplat d'encre, comme tout état actif */
+.steps > li.done::before {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.steps h2 .muted {
+  font-weight: 400;
 }
 .steps h2 {
   margin-bottom: 16px;
@@ -1257,6 +1275,27 @@ p.empty {
   }
   .setting {
     flex-wrap: wrap;
+  }
+  dialog.card-form {
+    width: calc(100vw - 16px);
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    padding: 20px;
+    scrollbar-width: thin;
+  }
+  dialog.card-form .actions {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    margin: 24px -20px -20px;
+    padding: 12px 20px 20px;
+  }
+  /* « Ajouter et en créer une autre » prend sa ligne ; Annuler et l'action principale restent côte à côte */
+  dialog.card-form .actions > .btn:not(.quiet, .primary) {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+  dialog.card-form .actions .btn {
+    padding-inline: 10px;
   }
 }
 

@@ -200,6 +200,8 @@ mod tests {
         let r = one(r#"{"type":"qa","question":" Q ","answer":"R","choices":["a","b"],"explanation":"","source_page":"3","difficulty":2}"#);
         assert_eq!(r.cards[0], Card { r#type: "qa".into(), question: "Q".into(), answer: "R".into(), choices: None, explanation: None, source_page: None });
         assert_eq!(one(r#"{"type":"qa","question":"Q","answer":"R","source_page":4}"#).cards[0].source_page, Some(4));
+        // Le terme clé ==…== passe tel quel : le surligneur est posé à l'affichage
+        assert_eq!(one(r#"{"type":"qa","question":"Q","answer":"C'est l'==élasticité=="}"#).cards[0].answer, "C'est l'==élasticité==");
     }
 
     #[test]

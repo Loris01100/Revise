@@ -1,4 +1,4 @@
-import { For, Show, createResource, createSignal } from "solid-js";
+import { For, Show, createResource, createSignal, onCleanup } from "solid-js";
 import { Expired, Failed, api, type CardType, type Subject } from "./api";
 import { buildPrompt } from "./prompt";
 import { Icon, Link, TYPES, announce, cardsLabel, go, one, plain, setSettings, settings } from "./ui";
@@ -15,7 +15,7 @@ function problem(e: unknown, text: string) {
   // Une réponse coupée avant tout « ] » ressemble à un texte sans tableau
   const cut = /EOF/.test(r) || (r.startsWith("aucun tableau") && /\[\s*\{/.test(text));
   if (cut) return "La réponse semble coupée. Demande à Claude de la renvoyer en entier, puis colle-la ici.";
-  if (r.startsWith("aucun tableau")) return "Ce texte ne contient pas de cartes. Copie la réponse de Claude, celle qui commence par [ .";
+  if (r.startsWith("aucun tableau")) return "Ce texte ne contient pas de cartes. Copie la réponse entière de Claude, le bloc JSON compris.";
   if (r.startsWith("le tableau ne contient")) return "La réponse ne contient aucune carte.";
   return "Claude a renvoyé un format illisible. Demande-lui de renvoyer uniquement le bloc JSON.";
 }
@@ -32,6 +32,8 @@ export default function Import(p: { id: string }) {
   const count = () => settings().importCount;
   const types = () => settings().importTypes;
   const [copied, setCopied] = createSignal(false);
+  // Le prompt est parti chez Claude : au retour sur l'onglet, la suite est l'étape 3
+  const [sent, setSent] = createSignal(false);
   const [copyFailed, setCopyFailed] = createSignal(false);
   const [typeError, setTypeError] = createSignal(false);
   let details!: HTMLDetailsElement;
@@ -47,6 +49,7 @@ export default function Import(p: { id: string }) {
       await navigator.clipboard.writeText(buildPrompt(count(), types()));
       setCopyFailed(false);
       setCopied(true);
+      setSent(true);
       announce("Prompt copié.");
       setTimeout(() => setCopied(false), 3000);
     } catch {
@@ -64,6 +67,15 @@ export default function Import(p: { id: string }) {
   const [report, setReport] = createSignal<Report | null>(null);
   let paste!: HTMLTextAreaElement;
   let primary: HTMLElement | undefined;
+  let step3!: HTMLLIElement;
+  const back3 = () => {
+    if (document.hidden || !sent() || report() || text()) return;
+    step3.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    // Au doigt, le focus ouvrirait le clavier par-dessus l'étape : seulement au clavier
+    if (matchMedia("(pointer: fine)").matches) paste.focus({ preventScroll: true });
+  };
+  document.addEventListener("visibilitychange", back3);
+  onCleanup(() => document.removeEventListener("visibilitychange", back3));
 
   async function submit() {
     if (busy()) return;
@@ -83,6 +95,8 @@ export default function Import(p: { id: string }) {
       else {
         setError(m);
         paste.focus();
+        // Sous un champ de 12 lignes, le message tombe hors de l'écran du téléphone
+        document.getElementById("paste-err")?.scrollIntoView({ block: "nearest" });
       }
     } finally {
       setBusy(false);
@@ -115,8 +129,13 @@ export default function Import(p: { id: string }) {
           when={report()}
           fallback={
             <ol class="steps">
-              <li>
-                <h2>Le prompt</h2>
+              <li classList={{ done: sent() }}>
+                <h2>
+                  Le prompt
+                  <Show when={sent()}>
+                    <span class="muted"> · copié</span>
+                  </Show>
+                </h2>
                 <div class="prompt-opts">
                   <div>
                     <label for="count" class="label">
@@ -160,8 +179,8 @@ export default function Import(p: { id: string }) {
                     </p>
                   </fieldset>
                 </div>
-                <button class="btn primary" onClick={copy} aria-describedby="copy-err">
-                  {copied() ? "Prompt copié" : "Copier le prompt"}
+                <button class="btn" classList={{ primary: !sent() }} onClick={copy} aria-describedby="copy-err">
+                  {copied() ? "Prompt copié" : sent() ? "Copier à nouveau" : "Copier le prompt"}
                 </button>
                 <p id="copy-err" class="hint">
                   {copyFailed() ? "Copie le texte sélectionné." : ""}
@@ -175,7 +194,7 @@ export default function Import(p: { id: string }) {
                 <h2>Chez Claude</h2>
                 <p class="muted">Colle le prompt dans Claude avec ton cours en pièce jointe, puis copie sa réponse.</p>
               </li>
-              <li>
+              <li ref={step3}>
                 <h2>
                   <label for="paste">La réponse</label>
                 </h2>
@@ -208,9 +227,11 @@ export default function Import(p: { id: string }) {
                 <p id="paste-err" class="error-text">
                   {error()}
                 </p>
-                <button class="btn primary" onClick={submit} disabled={busy()}>
+                <button class="btn primary" onClick={submit} disabled={busy()} aria-keyshortcuts="Control+Enter">
                   {busy() ? "Import…" : "Importer les cartes"}
-                  <span class="key">Ctrl+Entrée</span>
+                  <span class="key" aria-hidden="true">
+                    Ctrl+Entrée
+                  </span>
                 </button>
               </li>
             </ol>

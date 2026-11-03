@@ -37,6 +37,7 @@ Format de sortie : uniquement un bloc de code JSON, sans texte avant ni après. 
   }
 ]
 \`\`\`
+- Dans "answer" des cartes "qa" et "explain", entoure de == le terme clé à retenir, un seul par réponse : "La demande baisse quand le prix monte : c'est l'==élasticité-prix==." Jamais de == dans "question", "choices", "explanation", ni dans "answer" des "mcq" et "cloze".
 - "choices" vaut null sauf pour "mcq".
 - "source_page" est le numéro de la page du cours où se trouve la notion, ou null si le document n'a pas de pages.`;
 }
