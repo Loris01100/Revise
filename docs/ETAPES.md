@@ -134,7 +134,10 @@ Sur chaque route `/api/*` :
 - [x] `/include` : clavier complet, lecteur d'écran, mouvement réduit, besoins TDAH → [design/accessibility-revision.md](design/accessibility-revision.md)
 - [x] `/articulate` : textes d'interface en français → [design/copy-revision.md](design/copy-revision.md)
 - [x] `/impeccable shape` : monde visuel « surligneur sur polycopié » → [design/shape-revision.md](design/shape-revision.md)
-- [ ] Construction de l'interface dans ce monde, puis DESIGN.md (écrit à la fin, depuis l'interface construite)
+- [x] Construction de l'interface dans ce monde ([web/src/](../web/src/)), revue de finition Impeccable
+  - [x] Terme clé marqué `==terme==` dans la réponse, surligné à la correction ; police servie par `@fontsource`
+  - [x] `GET /api/subjects` renvoie aussi `next_due` (« Prochaines cartes le {jour} »)
+- [x] DESIGN.md, écrit depuis l'interface construite → [web/DESIGN.md](../web/DESIGN.md)
 
 ### 2.4 Frontend (`web/`)
 

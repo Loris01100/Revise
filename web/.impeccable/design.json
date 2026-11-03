@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T00:00:00Z",
+  "title": "Design System: Revise",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Gris de photocopie", "canonical": "light-dark(#ededea, #1c1c1b)", "tonalRamp": ["oklch(15% 0.003 105)", "oklch(25% 0.003 105)", "oklch(37% 0.003 105)", "oklch(50% 0.003 105)", "oklch(63% 0.003 105)", "oklch(76% 0.003 105)", "oklch(88% 0.003 105)", "oklch(95% 0.003 105)"] },
+      "sheet": { "role": "neutral", "displayName": "Feuille", "canonical": "light-dark(#fafaf7, #252524)", "tonalRamp": ["oklch(15% 0.003 105)", "oklch(25% 0.003 105)", "oklch(37% 0.003 105)", "oklch(50% 0.003 105)", "oklch(63% 0.003 105)", "oklch(76% 0.003 105)", "oklch(88% 0.003 105)", "oklch(98% 0.004 105)"] },
+      "ink": { "role": "primary", "displayName": "Encre de toner", "canonical": "light-dark(#1c1c1b, #ececE7)", "tonalRamp": ["oklch(15% 0.002 105)", "oklch(22% 0.002 105)", "oklch(33% 0.002 105)", "oklch(45% 0.002 105)", "oklch(58% 0.002 105)", "oklch(71% 0.002 105)", "oklch(84% 0.003 105)", "oklch(94% 0.004 105)"] },
+      "ink-2": { "role": "neutral", "displayName": "Encre atténuée", "canonical": "light-dark(#4d4d4a, #b0b0aa)", "tonalRamp": ["oklch(15% 0.004 105)", "oklch(25% 0.004 105)", "oklch(35% 0.005 105)", "oklch(43% 0.005 105)", "oklch(55% 0.005 105)", "oklch(68% 0.006 105)", "oklch(76% 0.006 105)", "oklch(90% 0.004 105)"] },
+      "line": { "role": "neutral", "displayName": "Filet", "canonical": "light-dark(#7e7e7a, #85857f)", "tonalRamp": ["oklch(15% 0.005 105)", "oklch(27% 0.005 105)", "oklch(39% 0.005 105)", "oklch(50% 0.005 105)", "oklch(60% 0.006 105)", "oklch(72% 0.005 105)", "oklch(84% 0.004 105)", "oklch(94% 0.003 105)"] },
+      "rule": { "role": "neutral", "displayName": "Trait de séparation", "canonical": "light-dark(rgb(28 28 27 / 0.14), rgb(236 236 231 / 0.14))" },
+      "wash": { "role": "neutral", "displayName": "Lavis", "canonical": "light-dark(rgb(28 28 27 / 0.06), rgb(236 236 231 / 0.07))" },
+      "on-ink": { "role": "primary", "displayName": "Blanc sur encre", "canonical": "light-dark(#fafaf7, #1c1c1b)" },
+      "error": { "role": "tertiary", "displayName": "Rouge de correction", "canonical": "light-dark(#a3241b, #ff9f93)", "tonalRamp": ["oklch(18% 0.06 28)", "oklch(28% 0.1 28)", "oklch(38% 0.13 28)", "oklch(47% 0.16 28)", "oklch(58% 0.16 28)", "oklch(70% 0.13 28)", "oklch(80% 0.1 28)", "oklch(92% 0.04 28)"] },
+      "hl-yellow": { "role": "secondary", "displayName": "Surligneur jaune", "canonical": "light-dark(#ffea3d, #5c5300)", "tonalRamp": ["oklch(18% 0.04 100)", "oklch(28% 0.06 100)", "oklch(40% 0.085 100)", "oklch(52% 0.11 100)", "oklch(65% 0.14 100)", "oklch(78% 0.16 100)", "oklch(90% 0.18 100)", "oklch(95% 0.09 100)"] },
+      "hl-pink": { "role": "secondary", "displayName": "Surligneur rose", "canonical": "light-dark(#ff9dcb, #7a2c52)", "tonalRamp": ["oklch(18% 0.04 350)", "oklch(28% 0.07 350)", "oklch(38% 0.1 350)", "oklch(50% 0.13 350)", "oklch(62% 0.14 350)", "oklch(74% 0.14 350)", "oklch(80% 0.12 350)", "oklch(94% 0.04 350)"] },
+      "hl-green": { "role": "secondary", "displayName": "Surligneur vert", "canonical": "light-dark(#93efa4, #1e5c30)", "tonalRamp": ["oklch(18% 0.04 150)", "oklch(28% 0.06 150)", "oklch(41% 0.09 150)", "oklch(52% 0.12 150)", "oklch(64% 0.14 150)", "oklch(76% 0.14 150)", "oklch(88% 0.13 150)", "oklch(95% 0.05 150)"] },
+      "hl-blue": { "role": "secondary", "displayName": "Surligneur bleu", "canonical": "light-dark(#93d4ff, #1f4e77)", "tonalRamp": ["oklch(18% 0.04 240)", "oklch(28% 0.06 240)", "oklch(40% 0.09 240)", "oklch(52% 0.11 240)", "oklch(64% 0.12 240)", "oklch(75% 0.11 240)", "oklch(84% 0.09 240)", "oklch(95% 0.03 240)"] },
+      "hl-orange": { "role": "secondary", "displayName": "Surligneur orange", "canonical": "light-dark(#ffba6b, #7a4512)", "tonalRamp": ["oklch(18% 0.04 65)", "oklch(28% 0.06 65)", "oklch(40% 0.09 65)", "oklch(50% 0.11 65)", "oklch(63% 0.14 65)", "oklch(74% 0.15 65)", "oklch(83% 0.13 65)", "oklch(94% 0.05 65)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Minuteur", "purpose": "Le minuteur de la pause, seul ; chiffres tabulaires." },
+      "headline": { "displayName": "Question", "purpose": "La question de la session ; réduite à clamp(22px, 0.8vw + 17px, 27px) une fois la réponse révélée." },
+      "title": { "displayName": "Titre d'état", "purpose": "Titre d'état de l'accueil et du bilan, nom de matière en tête du détail." },
+      "title-sm": { "displayName": "Titre de barre", "purpose": "Mot-symbole Revise, titre de barre, titres de section du bilan." },
+      "body-lg": { "displayName": "Corps de session", "purpose": "Choix de QCM, champ de réponse." },
+      "body": { "displayName": "Corps", "purpose": "Texte courant ; explications limitées à 68ch." },
+      "label": { "displayName": "Libellé", "purpose": "Libellés de champ, titres de section, position « 3 / 5 »." },
+      "caption": { "displayName": "Mention", "purpose": "Pastille « À revoir », mention de choix, en-têtes de tableau ; jamais en capitales." }
+    },
+    "shadows": [
+      { "name": "field-invalid", "value": "inset 0 0 0 1px var(--error)", "purpose": "Épaissit la bordure d'un champ invalide ; seule ombre du système, aucune élévation." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Courbe unique de toutes les transitions et animations." },
+      { "name": "state", "value": "150ms var(--ease)", "purpose": "Fond et bordure des boutons et de l'interrupteur." },
+      { "name": "switch-thumb", "value": "transform 200ms var(--ease)", "purpose": "Glissement du curseur de l'interrupteur." },
+      { "name": "draw", "value": "300ms var(--ease) 140ms both", "purpose": "Mouvement signature : le trait de surligneur se pose de gauche à droite (background-size 0% → 100%) à la révélation." },
+      { "name": "rise", "value": "200ms var(--ease)", "purpose": "Entrée du toast, 8 px vers le haut." },
+      { "name": "reduced-motion", "value": "animation: none; transition: none", "purpose": "Tout s'immobilise sous prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "600px" },
+      { "name": "split", "value": "800px" },
+      { "name": "dock-sticky", "value": "min-height: 480px" },
+      { "name": "touch", "value": "pointer: coarse" }
+    ],
+    "grain": {
+      "light": "SVG feTurbulence fractalNoise, baseFrequency .85, 2 octaves, encre à 16 % d'opacité, tuile de 160 px",
+      "dark": "Même bruit en blanc à 7 % d'opacité",
+      "attachment": "fixed, repris sur le dock de notation collant"
+    }
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Aplat d'encre pour l'unique action principale d'un écran, raccourci clavier après le libellé.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Réviser 5 cartes<span class=\"ds-key\"> · Entrée</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); color: var(--ink); font: 700 17px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-btn-primary { background: var(--ink); border-color: var(--ink); color: var(--on-ink); } .ds-btn-primary:hover { background: color-mix(in srgb, var(--ink), var(--paper) 16%); } .ds-btn-primary .ds-key { font-weight: 400; opacity: 0.78; }"
+    },
+    {
+      "name": "Bouton cadré",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Feuille cadrée d'un filet pour les actions secondaires.",
+      "html": "<button class=\"ds-btn-default\">Session de 15 min</button>",
+      "css": ".ds-btn-default { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); color: var(--ink); font: 700 17px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-default:hover { background: color-mix(in srgb, var(--sheet), var(--ink) 7%); } .ds-btn-default:active { background: color-mix(in srgb, var(--sheet), var(--ink) 12%); } .ds-btn-default:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }"
+    },
+    {
+      "name": "Bouton discret",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Sans bordure ni fond ; lavis au survol.",
+      "html": "<button class=\"ds-btn-quiet\">Pause<span class=\"ds-key\"> · Échap</span></button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--ink); font: 700 17px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; cursor: pointer; } .ds-btn-quiet:hover { background: var(--wash); } .ds-btn-quiet:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-btn-quiet .ds-key { color: var(--ink-2); font-weight: 400; }"
+    },
+    {
+      "name": "Champ",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Feuille cadrée d'un filet, libellé en 700 au-dessus.",
+      "html": "<label class=\"ds-label\" for=\"ds-a\">Ta réponse</label><input id=\"ds-a\" class=\"ds-field\" placeholder=\"Écris ta réponse\">",
+      "css": ".ds-label { display: block; margin-bottom: 8px; font: 700 15px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); } .ds-field { display: block; width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); color: var(--ink); font: 400 17px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; } .ds-field::placeholder { color: var(--ink-2); } .ds-field:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-field[aria-invalid='true'] { border-color: var(--error); box-shadow: inset 0 0 0 1px var(--error); }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "description": "Barre de 64 px : mot-symbole à gauche, liens en 700 à droite, lavis au survol.",
+      "html": "<header class=\"ds-top\"><span class=\"ds-wordmark\">Revise</span><nav class=\"ds-nav\"><a href=\"#\">Matières</a><a href=\"#\">Réglages</a></nav></header>",
+      "css": ".ds-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 0 clamp(16px, 4vw, 48px); border-bottom: 1px solid var(--rule); font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; } .ds-wordmark { font-size: 19px; font-weight: 700; color: var(--ink); } .ds-nav { display: flex; gap: 4px; } .ds-nav a { padding: 10px 12px; border-radius: 4px; color: var(--ink); font-weight: 700; text-decoration: none; } .ds-nav a:hover { background: var(--wash); } .ds-nav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }"
+    },
+    {
+      "name": "Puce",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Choix de durée ou de filtre ; pressée = aplat d'encre.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"false\">10 min</button><button class=\"ds-chip\" aria-pressed=\"true\">15 min</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 8px; } .ds-chip { min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); color: var(--ink); font: 400 15px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; cursor: pointer; } .ds-chip:hover { background: color-mix(in srgb, var(--sheet), var(--ink) 7%); } .ds-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }"
+    },
+    {
+      "name": "Ligne de matière",
+      "kind": "card",
+      "refersTo": "row",
+      "description": "Nom de matière surligné de sa couleur, pastille « À revoir » à l'encre dans un filet.",
+      "html": "<a class=\"ds-row\" href=\"#\" style=\"--hl: var(--hl-pink)\"><span class=\"ds-name\"><mark class=\"ds-mark\">Histoire</mark></span><span class=\"ds-badge\">À revoir</span></a>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 4px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; font: 400 17px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; } .ds-row:hover { background: var(--wash); } .ds-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-mark { color: inherit; background: linear-gradient(104deg, transparent 0.16em, var(--hl, var(--hl-yellow)) 0.2em calc(100% - 0.2em), transparent calc(100% - 0.16em)) no-repeat 0 78% / 100% 64%; padding: 0 0.22em; margin: 0 -0.12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; } .ds-badge { flex: none; padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; font-weight: 700; }"
+    },
+    {
+      "name": "Terme clé révélé",
+      "kind": "custom",
+      "description": "Signature : le trait de surligneur se pose de gauche à droite en 300 ms à la révélation.",
+      "html": "<p class=\"ds-answer\">La bataille de <mark class=\"ds-draw\">Marignan</mark>, en 1515.</p>",
+      "css": ".ds-answer { font: 700 21px/1.45 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); } .ds-draw { color: inherit; background: linear-gradient(104deg, transparent 0.16em, var(--hl, var(--hl-yellow)) 0.2em calc(100% - 0.2em), transparent calc(100% - 0.16em)) no-repeat 0 78% / 100% 64%; padding: 0 0.22em; margin: 0 -0.12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; animation: ds-draw 300ms cubic-bezier(0.16, 1, 0.3, 1) 140ms both; } @keyframes ds-draw { from { background-size: 0% 64%; } } @media (prefers-reduced-motion: reduce) { .ds-draw { animation: none; } }"
+    },
+    {
+      "name": "Interrupteur",
+      "kind": "custom",
+      "description": "Coins de 4 px, curseur carré ; actif = aplat d'encre.",
+      "html": "<button class=\"ds-switch\" role=\"switch\" aria-checked=\"true\" aria-label=\"Révélation automatique\"></button>",
+      "css": ".ds-switch { position: relative; width: 52px; height: 30px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 2px; background: var(--ink-2); transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-switch:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; } .ds-switch[aria-checked='true'] { background: var(--ink); border-color: var(--ink); } .ds-switch[aria-checked='true']::after { transform: translateX(22px); background: var(--on-ink); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le polycopié surligné",
+    "overview": "L'écran est une feuille de cours photocopiée : un gris de photocopie léger, un grain de toner à peine perceptible, une encre noire unique pour tout le texte. Ce qu'on retient reçoit un trait de surligneur fluo, posé derrière les mots comme un vrai feutre biseauté, qui laisse libres le haut et le bas de la ligne. Rien d'autre ne porte de couleur.\n\nLa densité est basse et l'interface tient en une colonne : une question, un champ, une action. Les contrôles sont noirs pleins ou cadrés d'un filet gris, aux coins à peine adoucis, sans aucune ombre ; la profondeur vient du contraste papier / feuille / encre, pas d'une élévation. Clair et sombre sont à égalité : le thème suit l'appareil, et chaque token est une paire `light-dark()`.\n\nLe monde refuse le tableau de bord de flashcards (cartes à ombre, compteurs, badges colorés, série), tout ce qui rend ludique (illustrations, mascotte, confettis) et tout ce qui fait « tech » (fond noir néon, police à chasse fixe).",
+    "keyCharacteristics": [
+      "Une seule famille, Atkinson Hyperlegible, en 400 et 700 uniquement.",
+      "Encre noire sur gris de photocopie, grain de toner fixe en fond.",
+      "Cinq surligneurs, toujours derrière le texte, jamais en couleur de texte, jamais sur un bouton.",
+      "Coins de 4 px partout, filets de 1 px, zéro ombre.",
+      "Un seul mouvement signature : le trait se pose de gauche à droite à la révélation."
+    ],
+    "rules": [
+      { "name": "The Highlighter-Behind Rule", "body": "Le fluo est un fond de texte en bande biseautée, jamais une couleur de texte, jamais le fond d'un bouton, d'une puce ou d'une barre. En clair, il se multiplie avec l'encre (`mix-blend-mode: multiply`) comme sur le papier ; en sombre, il reste normal.", "section": "colors" },
+      { "name": "The One Subject, One Colour Rule", "body": "Le fluo marque deux choses seulement : le nom d'une matière, dans sa couleur, et le terme clé révélé de la correction, dans la couleur de la matière de la carte. Une liste de matières montre donc une couleur par ligne ; un écran de session n'en montre qu'une.", "section": "colors" },
+      { "name": "The Ink-Only Controls Rule", "body": "Boutons, navigation, progression, interrupteurs et pastilles restent en encre, feuille et filet. L'état actif s'exprime par l'aplat d'encre, pas par une couleur.", "section": "colors" },
+      { "name": "The Two Weights Rule", "body": "400 et 700, rien d'autre. Un écart de rang se dit par la taille ou la graisse, pas par l'italique, l'espacement des lettres ou les capitales.", "section": "typography" },
+      { "name": "The Shortcut-After Rule", "body": "Le raccourci clavier suit le libellé (« Pause · Échap »), en encre atténuée et 400 ; il disparaît sur écran tactile.", "section": "typography" },
+      { "name": "The No-Shadow Rule", "body": "Aucune `box-shadow` d'élévation. La seule ombre du code est un filet intérieur de 1 px qui épaissit la bordure d'un champ invalide.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do poser le fluo derrière le texte, en bande biseautée, avec la variable `--hl` de la matière.",
+      "Do garder les contrôles en encre, feuille et filet de 1 px `line`, coins de 4 px.",
+      "Do dire l'état actif par l'aplat d'encre (bouton principal, puce pressée, interrupteur).",
+      "Do écrire chaque nouvelle couleur en paire `light-dark()` et vérifier l'encre à ≥ 4,5:1 sur elle dans les deux thèmes.",
+      "Do placer le raccourci clavier après le libellé, en encre atténuée, masqué au doigt.",
+      "Do garder des cibles de 44 px minimum et l'anneau de focus d'encre de 2 px."
+    ],
+    "donts": [
+      "Don't utiliser un surligneur comme couleur de texte, ni comme fond de bouton, de puce, de pastille ou de barre de progression.",
+      "Don't ajouter d'ombre portée, de carte flottante ou de dégradé décoratif.",
+      "Don't introduire une deuxième police, une graisse autre que 400 et 700, ni des libellés en capitales.",
+      "Don't ajouter compteurs de série, badges colorés, illustrations, mascotte ou confettis.",
+      "Don't utiliser un fond noir néon ou une police à chasse fixe.",
+      "Don't animer autre chose que le trait de révélation au-delà des transitions d'état de 150–200 ms."
+    ]
+  }
+}

@@ -48,10 +48,11 @@ const initialState = (db: D1Database, cardId: string, t: string) =>
 
 api.get("/subjects", async (c) => {
   const { results } = await c.env.DB.prepare(
-    `SELECT s.id, s.name, s.color, s.created_at, COUNT(c.id) AS cards, COUNT(cs.card_id) AS due
+    `SELECT s.id, s.name, s.color, s.created_at, COUNT(c.id) AS cards,
+            COUNT(CASE WHEN cs.due <= ?1 THEN 1 END) AS due, MIN(cs.due) AS next_due
      FROM subjects s
      LEFT JOIN cards c ON c.subject_id = s.id AND c.status = 'active'
-     LEFT JOIN card_state cs ON cs.card_id = c.id AND cs.due <= ?
+     LEFT JOIN card_state cs ON cs.card_id = c.id
      GROUP BY s.id ORDER BY s.name`,
   )
     .bind(now())
