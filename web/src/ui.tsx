@@ -160,9 +160,25 @@ function Diagram(p: { src: string }) {
     setSvg((await m.render(`diagram-${++diagrams}`, p.src)).svg);
   });
   return (
-    <Show when={svg() !== null} fallback={<code class="block">{p.src}</code>}>
+    <Show when={svg() !== null} fallback={<code class="block" data-invalid>{p.src}</code>}>
       {/* SVG nettoyé par Mermaid (securityLevel strict) */}
       <span class="diagram" innerHTML={svg() ?? ""} />
+    </Show>
+  );
+}
+
+/** Aperçu rendu d'un champ de carte qui contient du code ou un schéma, mis à jour après la frappe. */
+export function Preview(p: { text: string }) {
+  const [text, setText] = createSignal(p.text);
+  createEffect(() => {
+    const t = setTimeout(setText, 400, p.text);
+    onCleanup(() => clearTimeout(t));
+  });
+  return (
+    <Show when={text().includes("`")}>
+      <div class="preview" aria-label="Aperçu" role="group">
+        <Rich text={text()} />
+      </div>
     </Show>
   );
 }

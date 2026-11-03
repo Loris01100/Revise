@@ -1,7 +1,7 @@
 import { For, Index, Show, createEffect, createResource, createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { api, type Card, type CardType, type Color, type Subject } from "./api";
-import { COLORS, Confirm, Dialog, Icon, Link, TYPES, announce, arrows, go, hl, one, plain, start } from "./ui";
+import { COLORS, Confirm, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, one, plain, start } from "./ui";
 
 const STATUS: Record<string, string> = { active: "Active", suspended: "Suspendue", draft: "Brouillon" };
 const norm = (s: string) =>
@@ -499,6 +499,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           {...err("question")}
           aria-describedby="question-err question-hint"
         />
+        <Preview text={question()} />
         <Show when={type() === "cloze"}>
           <p id="question-hint" class="hint">
             Marque le mot à retrouver avec ___.
@@ -526,6 +527,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
                 {...err("answer")}
                 aria-describedby="answer-err answer-hint"
               />
+              <Preview text={answer()} />
               <p id="answer-hint" class="hint">
                 Entoure le terme clé de == pour le surligner à la correction : ==élasticité==.
               </p>
@@ -574,6 +576,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           value={explanation()}
           onInput={(e) => setExplanation(e.currentTarget.value)}
         />
+        <Preview text={explanation()} />
 
         <div class="actions">
           <button type="button" class="btn quiet" onClick={close}>

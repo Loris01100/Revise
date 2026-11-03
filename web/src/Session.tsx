@@ -33,6 +33,7 @@ export default function Session(p: { run: Run }) {
   const [help, setHelp] = createSignal("");
   const card = () => cards[i()];
   const cur = () => st[i()];
+  const code = () => /`/.test(card().question + card().answer);
   let locked = false;
 
   // Temps de session, pauses déduites
@@ -328,12 +329,20 @@ export default function Session(p: { run: Run }) {
                       </label>
                       <textarea
                         id="answer"
-                        class="field"
+                        classList={{ field: true, code: code() }}
+                        spellcheck={!code()}
                         rows={card().type === "explain" ? 6 : 3}
                         aria-describedby="q"
                         value={cur().draft}
                         onInput={(e) => setSt(i(), { draft: e.currentTarget.value, typed: true })}
                         onKeyDown={(e) => {
+                          // Carte de code : Tab insère une tabulation, Maj+Tab sort du champ
+                          if (e.key === "Tab" && !e.shiftKey && code()) {
+                            e.preventDefault();
+                            e.currentTarget.setRangeText("	", e.currentTarget.selectionStart, e.currentTarget.selectionEnd, "end");
+                            setSt(i(), { draft: e.currentTarget.value, typed: true });
+                            return;
+                          }
                           // Réponse longue : Entrée va à la ligne, Ctrl+Entrée révèle
                           const long = card().type === "explain";
                           if (e.key === "Enter" && !e.shiftKey && !e.isComposing && long === (e.ctrlKey || e.metaKey)) {
@@ -346,6 +355,7 @@ export default function Session(p: { run: Run }) {
                         {card().type === "explain"
                           ? "Ctrl+Entrée pour voir la réponse"
                           : "Entrée pour voir la réponse · Maj+Entrée pour aller à la ligne"}
+                        {code() && " · Tab insère une tabulation"}
                       </p>
                       <button class="btn reveal">Afficher la réponse</button>
                       <ParkButton />

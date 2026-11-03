@@ -807,7 +807,8 @@ a.row:hover {
   white-space: pre-wrap;
 }
 /* Code et schémas des cartes : à leur taille de lecture, quel que soit le texte autour (titre, réponse) */
-.card code {
+.card code,
+.preview code {
   padding: 0.1em 0.3em;
   border-radius: 4px;
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
@@ -816,7 +817,9 @@ a.row:hover {
   background: var(--rule);
 }
 .card code.block,
-.card .diagram {
+.card .diagram,
+.preview code.block,
+.preview .diagram {
   display: block;
   margin: 12px 0;
   overflow-x: auto;
@@ -824,15 +827,35 @@ a.row:hover {
   line-height: 1.5;
   text-align: start;
 }
-.card code.block {
+.card code.block,
+.preview code.block {
   padding: 12px 14px;
   border-radius: var(--r);
   white-space: pre;
   tab-size: 2;
 }
-.card .diagram svg {
+.card .diagram svg,
+.preview .diagram svg {
   max-width: 100%;
   height: auto;
+}
+/* Aperçu sous un champ de l'éditeur ; un schéma invalide le dit */
+.preview {
+  margin-top: 8px;
+  padding: 0 14px;
+  border-left: 2px solid var(--line);
+  white-space: pre-wrap;
+}
+.preview code[data-invalid]::before {
+  content: "Schéma Mermaid invalide\A";
+  color: var(--error);
+  font-family: inherit;
+}
+/* Réponse tapée sur une carte de code */
+.field.code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 15px;
+  tab-size: 2;
 }
 .grades-dock {
   margin-top: 40px;
