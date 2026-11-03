@@ -199,9 +199,9 @@ Vérification du rendu :
 
 ### 3.3 Route d'import
 
-- [ ] `POST /api/imports` (JSON : matière, texte collé), taille max **1 Mo**
-- [ ] Valider via le cœur Rust puis insérer les cartes en `draft` (`source_id` vide)
-- [ ] Réponse : cartes créées + cartes rejetées avec leur raison
+- [x] `POST /api/imports` (JSON : matière, texte collé), taille max **1 Mo**
+- [x] Valider via le cœur Rust puis insérer les cartes en `draft` (`source_id` vide)
+- [x] Réponse : cartes créées + cartes rejetées avec leur raison
 
 ### 3.4 Frontend
 

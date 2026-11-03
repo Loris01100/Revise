@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
-import { compose, schedule } from "./core";
+import { bodyLimit } from "hono/body-limit";
+import { compose, schedule, validate_cards } from "./core";
 import type { Env } from "./index";
 
 // Doit rester égal à NEW_PER_DAY dans core/src/session.rs
@@ -76,7 +77,7 @@ api.get("/subjects/:id/cards", async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT c.id, c.type, c.question, c.answer, c.choices, c.explanation, c.status, c.created_at, cs.due
      FROM cards c LEFT JOIN card_state cs ON cs.card_id = c.id
-     WHERE c.subject_id = ? ORDER BY c.created_at`,
+     WHERE c.subject_id = ? ORDER BY c.created_at, c.rowid`,
   )
     .bind(c.req.param("id"))
     .all();
@@ -115,6 +116,36 @@ api.patch("/cards/:id", async (c) => {
 api.delete("/cards/:id", async (c) => {
   const res = await c.env.DB.prepare("DELETE FROM cards WHERE id = ?").bind(c.req.param("id")).run();
   return res.meta.changes ? c.body(null, 204) : notFound(c);
+});
+
+// Import du JSON collé depuis Claude : les cartes valides arrivent en brouillon, à relire avant révision
+api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
+  const b = await body(c);
+  if (!str(b.subject_id, 100)) return bad(c, "subject_id");
+  if (typeof b.text !== "string") return bad(c, "text");
+  const subject = await c.env.DB.prepare("SELECT 1 FROM subjects WHERE id = ?").bind(b.subject_id).first();
+  if (!subject) return notFound(c);
+
+  const { results } = await c.env.DB.prepare("SELECT question FROM cards WHERE subject_id = ?").bind(b.subject_id).all<{ question: string }>();
+  let report: { cards: Record<string, unknown>[]; rejected: { index: number; reason: string }[] };
+  try {
+    report = JSON.parse(validate_cards(b.text, JSON.stringify(results.map((r) => r.question))));
+  } catch (e) {
+    return c.json({ error: "invalid", field: "text", reason: (e as Error).message }, 400);
+  }
+
+  const cards = report.cards.map((card) => ({ id: crypto.randomUUID(), ...card }));
+  // Une seule requête quel que soit le nombre de cartes ; l'ordre du lot se retrouve dans rowid
+  if (cards.length)
+    await c.env.DB.prepare(
+      `INSERT INTO cards (id, subject_id, type, question, answer, choices, explanation, source_page, status, created_at)
+       SELECT j.value ->> 'id', ?1, j.value ->> 'type', j.value ->> 'question', j.value ->> 'answer', json_extract(j.value, '$.choices'),
+              j.value ->> 'explanation', j.value ->> 'source_page', 'draft', ?2
+       FROM json_each(?3) j ORDER BY j.key`,
+    )
+      .bind(b.subject_id, now(), JSON.stringify(cards))
+      .run();
+  return c.json({ cards, rejected: report.rejected }, 201);
 });
 
 // Ouvre une session et renvoie sa file ; rien à réviser = pas de session créée

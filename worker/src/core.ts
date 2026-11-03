@@ -4,4 +4,4 @@ import { initSync } from "../../core/pkg/revise_core.js";
 
 initSync({ module: wasm });
 
-export { compose, schedule } from "../../core/pkg/revise_core.js";
+export { compose, schedule, validate_cards } from "../../core/pkg/revise_core.js";
