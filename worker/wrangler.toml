@@ -26,7 +26,6 @@ migrations_dir = "migrations"
 # Pas de R2 : l'import se fait par copier-coller (phase 3)
 
 [vars]
-CLAUDE_MODEL = "claude-sonnet-5-5"
 TEAM_DOMAIN = "https://young-brook-6906.cloudflareaccess.com"
 POLICY_AUD = "a38ce0026d37977463d6723c2479e6b13000e3b4da1b65a38095e3dcc2551359"
 OWNER_EMAIL = "lolobach01100@gmail.com"

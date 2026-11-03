@@ -214,8 +214,8 @@ Vérification du rendu :
 
 ### 3.5 Vérification
 
-- [ ] Tester avec un cours de 20 pages : < 5 min, cartes exploitables
-- [ ] Nettoyage : retirer `CLAUDE_MODEL` de `wrangler.toml` et de `worker/src/index.ts`
+- [x] Tester avec un cours de 20 pages : < 5 min, cartes exploitables
+- [x] Nettoyage : retirer `CLAUDE_MODEL` de `wrangler.toml` et de `worker/src/index.ts`
 
 ---
 

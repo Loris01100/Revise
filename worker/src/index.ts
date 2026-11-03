@@ -4,7 +4,6 @@ import api from "./routes";
 
 export interface Env {
   DB: D1Database;
-  CLAUDE_MODEL: string;
   TEAM_DOMAIN: string;
   POLICY_AUD: string;
   OWNER_EMAIL: string;
