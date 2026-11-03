@@ -141,25 +141,27 @@ Sur chaque route `/api/*` :
 
 ### 2.4 Frontend (`web/`)
 
-- [ ] **Accueil** : gros bouton « 5 cartes », bouton « Session 15 min », cartes dues par matière
-- [ ] **Matières** : liste, cartes par matière, recherche, édition, ajout manuel
-- [ ] **Session focus** : une carte plein écran, champ de réponse, barre « 4 / 12 », rien d'autre
-- [ ] **Pause** : minuteur, suggestion de bouger/boire, « Reprendre » / « Arrêter là »
-- [ ] **Fin de session** : bilan (cartes, temps) + liste du parking à pensées
-- [ ] **Réglages** : révélation automatique de la correction (interrupteur + délai 15–180 s)
+- [x] **Accueil** : gros bouton « 5 cartes », bouton « Session 15 min », matières avec pastille « Cartes du jour » sans nombre ([decisions.md](design/decisions.md))
+- [x] **Matières** : liste, cartes par matière, recherche, édition, ajout manuel
+- [x] **Session focus** : une carte plein écran, champ de réponse, barre « 4 / 12 », rien d'autre
+- [x] **Pause** : minuteur, suggestion de bouger/boire, « Reprendre » / « Arrêter là »
+- [x] **Fin de session** : bilan (cartes, temps) + pensées de la session, les plus anciennes repliées
+- [x] **Réglages** : révélation automatique de la correction (interrupteur + délai 15–180 s)
 
 Règles du mode focus :
-- [ ] Aucune navigation visible pendant la session
-- [ ] Réponse tapée **avant** affichage de la correction, puis note 1–4
-- [ ] Raccourcis : `Espace` révéler, `1`–`4` noter, `P` parking à pensées, `Échap` pause
-- [ ] Durée réglable 10–25 min, pause proposée automatiquement à la fin
-- [ ] Animations douces, couleurs calmes, thème clair + sombre
-- [ ] Aucune notification pendant la session
-- [ ] Pas de streak punitive
-- [ ] Utilisable au clavier (desktop) et au doigt (mobile)
+- [x] Aucune navigation visible pendant la session
+- [x] Réponse tapée **avant** affichage de la correction, puis note 1–4
+- [x] Raccourcis : `Entrée` révéler (`Ctrl+Entrée` en réponse longue), `1`–`4` noter, `P` parking après la révélation, `Échap` pause ([decisions.md](design/decisions.md)) ; bouton « Noter une pensée » visible avant la révélation
+- [x] Durée réglable 10–25 min, pause proposée automatiquement à la fin
+- [x] Animations douces, couleurs calmes, thème clair + sombre
+- [x] Aucune notification pendant la session
+- [x] Pas de streak punitive
+- [x] Utilisable au clavier (desktop) et au doigt (mobile)
 
 Vérification du rendu :
 - [ ] `/impeccable critique` et `/impeccable audit` sur chaque écran
+  - [x] Critique (28/40) et correctifs des 2 P1 et 3 P2 → [web/.impeccable/critique/](../web/.impeccable/critique/)
+  - [ ] Audit, et contrôle à l'écran (navigateur de test indisponible le 2026-11-03)
 - [ ] `/impeccable polish` avant de déployer
 
 ### 2.5 Déploiement

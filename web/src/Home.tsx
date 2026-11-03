@@ -133,12 +133,12 @@ export default function Home() {
                 {(s) => (
                   <li>
                     <Link href={`/matieres/${s.id}`} class="row">
-                                            <span class="name" title={s.name} style={hl(s.color)}>
+                    <span class="name" title={s.name} style={hl(s.color)}>
                         <mark>{s.name}</mark>
                       </span>
                       <Show when={s.due > 0}>
                         <span class="badge">
-                          À revoir
+                          Cartes du jour
                         </span>
                       </Show>
                     </Link>

@@ -52,7 +52,7 @@
 | Action secondaire | Session de {durée} min |
 | Lien de durée | Changer la durée |
 | Titre de liste | Matières |
-| Pastille | À revoir |
+| Pastille | Cartes du jour |
 | Liens du haut | Matières · Réglages |
 | Premier lancement, titre | Commence par une matière. |
 | Premier lancement, texte | Crée-la, ajoute quelques cartes, et ta première session sera prête. |
@@ -114,7 +114,7 @@
 | Aucune carte faite | Session arrêtée avant la première carte. |
 | Notes en attente | {n} note(s) partira/partiront dès que la connexion revient. |
 | Titre des pensées | Tes pensées notées |
-| Actions par pensée | Fait · Garder |
+| Actions par pensée | Fait · Plus tard (pensées d'avant repliées sous « {n} pensées gardées plus tôt ») |
 | Actions | Terminer — 5 cartes de plus |
 
 ### Matières

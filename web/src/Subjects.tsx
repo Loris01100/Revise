@@ -92,12 +92,12 @@ export default function Subjects(p: { id?: string }) {
                       go(`/matieres/${s.id}`);
                     }}
                   >
-                                        <span class="name" title={s.name} style={hl(s.color)}>
+                    <span class="name" title={s.name} style={hl(s.color)}>
                       <mark>{s.name}</mark>
                     </span>
                     <Show when={s.due > 0}>
                       <span class="badge">
-                        À revoir
+                        Cartes du jour
                       </span>
                     </Show>
                   </a>
@@ -375,7 +375,8 @@ function CardForm(p: { subject: Subject; card?: Card; onSaved: () => void; onClo
   function validate() {
     const e: Record<string, string> = {};
     if (!question().trim()) e.question = "Écris la question.";
-    else if (type() === "cloze" && !/_{3,}/.test(question())) e.question = "Marque le mot à retrouver avec ___.";
+    else if (type() === "cloze" && question().match(/_{3,}/g)?.length !== 1)
+      e.question = "Marque un seul mot à retrouver, avec ___.";
     if (type() === "mcq") {
       if (choices().filter((x) => x.trim()).length < 2) e.choices = "Ajoute au moins 2 choix.";
       else if (!choices()[correct()]?.trim()) e.choices = "Indique la bonne réponse.";

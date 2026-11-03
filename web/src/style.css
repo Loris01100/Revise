@@ -140,7 +140,7 @@ mark.draw {
     background-size: 0% 64%;
   }
 }
-/* « À revoir » : à l'encre, cerclé d'un filet ; le fluo reste au nom de la matière */
+/* « Cartes du jour » : à l'encre, cerclé d'un filet ; le fluo reste au nom de la matière */
 .badge {
   flex: none;
   padding: 1px 7px;
@@ -867,6 +867,20 @@ a.row:hover {
 }
 .thoughts .row .name {
   white-space: normal;
+}
+.earlier {
+  margin-top: 16px;
+}
+.earlier summary {
+  padding: 10px 0;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+/* « Noter une pensée » avant la révélation : discret, sous l'action principale */
+.answer-form .park,
+.choices + .park {
+  display: flex;
+  margin: 12px 0 0 -12px;
 }
 .end .stack {
   margin-top: 40px;

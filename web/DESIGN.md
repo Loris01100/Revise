@@ -195,7 +195,7 @@ Une palette d'encre et de papier, presque achromatique, que seuls les cinq surli
 - **Body-lg** (400, 19 px) : choix de QCM, champ de réponse ; la réponse correcte est à 21 px en 700.
 - **Body** (400, 17 px, 1,5) : texte courant ; explications limitées à 68ch.
 - **Label** (700, 15 px) : libellés de champ, titres de section des réglages et de liste (en encre atténuée), position « 3 / 5 » en chiffres tabulaires.
-- **Caption** (700, 13 px) : pastille « À revoir », mention de choix (« Ton choix »), en-têtes de tableau. Jamais en capitales.
+- **Caption** (700, 13 px) : pastille « Cartes du jour », mention de choix (« Ton choix »), en-têtes de tableau. Jamais en capitales.
 
 ### Named Rules
 **The Two Weights Rule.** 400 et 700, rien d'autre. Un écart de rang se dit par la taille ou la graisse, pas par l'italique, l'espacement des lettres ou les capitales.
@@ -249,7 +249,7 @@ Barre de 64 px : Revise à gauche en 19 px / 700, liens Matières · Réglages �
 ### Lists (rows)
 Lignes de 52 px séparées par des traits `rule`, nom tronqué sur une ligne ; lavis au survol. Dans la colonne latérale, la ligne courante prend la feuille et le 700.
 
-### Badge « À revoir »
+### Badge « Cartes du jour »
 Texte d'encre en 13 px / 700 dans un filet `line` de 1 px, coins de 4 px, padding 1 × 7 px. Le fluo reste au nom de la matière sur la même ligne.
 
 ### Switch

@@ -13,7 +13,7 @@ export type Card = {
   explanation: string | null;
   status?: "draft" | "active" | "suspended";
 };
-export type Parked = { id: string; text: string };
+export type Parked = { id: string; text: string; session_id: string | null };
 
 export class Offline extends Error {}
 export class Expired extends Error {}

@@ -104,6 +104,7 @@ export default function Session(p: { run: Run }) {
       body: { id: r.id, card_id: cards[k].id, grade: g, duration_ms: r.ms, reviewed_at: r.at },
     });
     setSt(k, "review", r);
+    setGradedAt(Date.now());
     if (k + 1 >= cards.length) return void end();
     setI(k + 1);
     if (timeUp() && !autoPaused) {
@@ -111,7 +112,10 @@ export default function Session(p: { run: Run }) {
       openPause();
     }
   }
-  const canCorrect = () => view() === "card" && i() > 0 && !cur().review && !!st[i() - 1].review;
+  // « Corriger » ne reste que 10 s après une note : assez pour une erreur de touche, pas pour ruminer
+  const [gradedAt, setGradedAt] = createSignal(0);
+  const canCorrect = () =>
+    view() === "card" && i() > 0 && !cur().review && !!st[i() - 1].review && now() - gradedAt() < 10_000;
 
   // Pause : la carte reste montée (cachée) pour garder la saisie et rendre le focus
   let back: HTMLElement | null = null;
@@ -188,6 +192,34 @@ export default function Session(p: { run: Run }) {
   }
 
   const subjectOf = () => subject(card().subject_id);
+  const ParkButton = (q: { shortcut?: boolean }) => (
+    <button type="button" class="btn small quiet park" onClick={() => setParking(true)}>
+      Noter une pensée
+      <Show when={q.shortcut}>
+        <span class="key"> · P</span>
+      </Show>
+    </button>
+  );
+  // Bilan : les pensées de cette session d'abord, les plus anciennes repliées
+  const mine = () => parked().filter((t) => t.session_id === sid);
+  const earlier = () => parked().filter((t) => t.session_id !== sid);
+  const Thoughts = (q: { list: Parked[] }) => (
+    <ul class="rows">
+      <For each={q.list}>
+        {(t) => (
+          <li class="row">
+            <span class="name">{t.text}</span>
+            <button class="btn small" onClick={() => settle(t, true)}>
+              Fait
+            </button>
+            <button class="btn small quiet" onClick={() => settle(t, false)}>
+              Plus tard
+            </button>
+          </li>
+        )}
+      </For>
+    </ul>
+  );
 
   return (
     <div class="page session">
@@ -273,14 +305,21 @@ export default function Session(p: { run: Run }) {
                         value={cur().draft}
                         onInput={(e) => setSt(i(), { draft: e.currentTarget.value, typed: true })}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+                          // Réponse longue : Entrée va à la ligne, Ctrl+Entrée révèle
+                          const long = card().type === "explain";
+                          if (e.key === "Enter" && !e.shiftKey && !e.isComposing && long === (e.ctrlKey || e.metaKey)) {
                             e.preventDefault();
                             reveal();
                           }
                         }}
                       />
-                      <p class="hint key">Entrée pour voir la réponse · Maj+Entrée pour aller à la ligne</p>
+                      <p class="hint key">
+                        {card().type === "explain"
+                          ? "Ctrl+Entrée pour voir la réponse"
+                          : "Entrée pour voir la réponse · Maj+Entrée pour aller à la ligne"}
+                      </p>
                       <button class="btn reveal">Afficher la réponse</button>
+                      <ParkButton />
                     </form>
                   }
                 >
@@ -294,6 +333,7 @@ export default function Session(p: { run: Run }) {
                       )}
                     </For>
                   </div>
+                  <ParkButton />
                 </Show>
               }
             >
@@ -343,7 +383,7 @@ export default function Session(p: { run: Run }) {
                   role="group"
                   aria-label="Note ta réponse"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") e.preventDefault(); // Entrée ne note jamais
+                    if (e.key === "Enter" || e.key === " ") e.preventDefault(); // Entrée et Espace ne notent jamais
                     arrows(e, "x");
                   }}
                 >
@@ -371,9 +411,7 @@ export default function Session(p: { run: Run }) {
                   <p class="muted small" aria-hidden="true">
                     {help()}
                   </p>
-                  <button class="btn small quiet" onClick={() => setParking(true)}>
-                    Noter une pensée<span class="key"> · P</span>
-                  </button>
+                  <ParkButton shortcut />
                 </div>
               </div>
             </Show>
@@ -433,21 +471,17 @@ export default function Session(p: { run: Run }) {
             <Show when={parked().length}>
               <section class="thoughts" aria-labelledby="thoughts-title">
                 <h2 id="thoughts-title">Tes pensées notées</h2>
-                <ul class="rows">
-                  <For each={parked()}>
-                    {(t) => (
-                      <li class="row">
-                        <span class="name">{t.text}</span>
-                        <button class="btn small" onClick={() => settle(t, true)}>
-                          Fait
-                        </button>
-                        <button class="btn small quiet" onClick={() => settle(t, false)}>
-                          Garder
-                        </button>
-                      </li>
-                    )}
-                  </For>
-                </ul>
+                <Show when={mine().length}>
+                  <Thoughts list={mine()} />
+                </Show>
+                <Show when={earlier().length}>
+                  <details class="earlier" open={!mine().length}>
+                    <summary>
+                      {one(earlier().length) ? "1 pensée gardée plus tôt" : `${earlier().length} pensées gardées plus tôt`}
+                    </summary>
+                    <Thoughts list={earlier()} />
+                  </details>
+                </Show>
               </section>
             </Show>
             <div class="stack">

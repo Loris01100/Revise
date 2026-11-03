@@ -197,3 +197,26 @@
 - Why: le concepteur refuse le ludique ; un fluo partout le deviendrait, et un fluo en couleur de texte échoue au contraste.
 - Rejected: fluo sur les boutons et la progression.
 - Rests on: shape-revision.md, Selected direction.
+
+## 2026-11-03 · La pastille des matières dit « Cartes du jour », plus « À revoir »
+- Decided by: utilisateur
+- Why: « À revoir » est aussi la note d'échec ; l'accueil étiquetait des matières entières avec ce mot.
+- Rejected: « À revoir » ; « Au programme ».
+- Rests on: /impeccable critique du 2026-11-03, P2.
+
+## 2026-11-03 · « Noter une pensée » visible aussi avant la révélation ; le bilan ne montre d'abord que les pensées de la session
+- Decided by: utilisateur (correctifs de la critique)
+- Why: la pensée parasite arrive surtout pendant la réponse ; et les pensées gardées des sessions précédentes transformaient chaque bilan en arriéré.
+- Rejected: parking accessible seulement par Échap → Pause avant la révélation ; liste de toutes les pensées non traitées à chaque bilan.
+- Rests on: /impeccable critique du 2026-11-03, P1.
+
+## 2026-11-03 · « Corriger la note précédente » disparaît 10 s après la note
+- Decided by: utilisateur
+- Why: corriger une erreur de touche, sans laisser une invitation permanente à ruminer.
+- Rejected: bouton affiché jusqu'à la note suivante ; correction au bilan seulement.
+- Rests on: /impeccable critique du 2026-11-03.
+
+## 2026-11-03 · Réponse longue : `Entrée` va à la ligne, `Ctrl+Entrée` révèle ; un seul trou par texte à trous ; `Espace` ne note jamais
+- Decided by: Claude, par défaut
+- Why: une réponse longue s'écrit sur plusieurs lignes ; un texte à trous n'a qu'une réponse ; le focus arrive sur « 1 · À revoir » et `Espace` l'activait.
+- Rests on: /impeccable critique du 2026-11-03, P2.

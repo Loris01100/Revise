@@ -82,7 +82,7 @@ Contenu : la question, un champ de réponse déjà focalisé, une progression di
 **Rôle** : clore sur ce qui est acquis et vider le parking.
 
 - Bilan : cartes revues, temps passé. Pas de score, pas de pourcentage d'échecs.
-- Les pensées parquées pendant la session, chacune avec **Fait** et **Garder**. Celles gardées reviennent au prochain bilan.
+- Les pensées parquées pendant la session, chacune avec **Fait** et **Plus tard**. Celles des sessions précédentes sont repliées sous « {n} pensées gardées plus tôt ».
 - Action principale : **Terminer** (retour à l'accueil). Action secondaire : **5 cartes de plus**. Rien ne s'enchaîne sans action.
 
 ### 6. Matières
