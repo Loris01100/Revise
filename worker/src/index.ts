@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireOwner } from "./auth";
+import "./core";
 
 export interface Env {
   DB: D1Database;

@@ -2,3 +2,4 @@
 
 pub mod fsrs;
 pub mod session;
+mod wasm;

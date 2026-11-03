@@ -101,7 +101,10 @@ Sur chaque route `/api/*` :
   - [x] Alternance des matières et des types de questions
   - [x] Mode `quick5` : les 5 cartes les plus en retard
 - [x] Tests `cargo test` sur FSRS et la composition de session
-- [ ] `wasm-pack build core --target bundler` et import dans le Worker
+- [x] `wasm-pack build core --target web` et import dans le Worker ([worker/src/core.ts](../worker/src/core.ts))
+  - [x] Cible `web` + `initSync` : wrangler importe le `.wasm` comme `WebAssembly.Module`, ce que la cible `bundler` n'attend pas
+  - [x] Recompilé à chaque `wrangler dev` / `deploy` (section `[build]` de `wrangler.toml`)
+  - [x] `schedule` et `compose` échangent du JSON calqué sur les lignes D1 (`card_state`, + `id`, `subject_id`, `type` pour `compose`)
 
 ### 2.2 API (`worker/src/routes/`)
 
