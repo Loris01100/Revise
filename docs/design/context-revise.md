@@ -25,7 +25,7 @@ Application web personnelle (PWA installable), nouvelle, au stade MVP. Elle impo
 
 - **Technique** : un Worker Cloudflare (Hono, TypeScript), cœur Rust en WebAssembly, D1, SolidJS. Temps CPU limité par requête sur le palier gratuit. Collage limité à 1 Mo.
 - **Génération** : un PDF de plusieurs dizaines de pages prend jusqu'à une minute ; la progression est affichée en streaming.
-- **Accès** : une seule identité, derrière Cloudflare Access ; aucune donnée partagée.
+- **Accès** : quelques invités derrière Cloudflare Access ; contenu partagé, progression propre à chacun.
 - **Langue** : interface en français uniquement.
 - **Équipe** : une personne, qui conçoit, construit et utilise. Aucun circuit de validation.
 - **Réglementaire** : aucun ; pas de tiers dont les données sont traitées. Le contenu des cours est donné à Claude par l'utilisateur, hors de l'app.

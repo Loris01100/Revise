@@ -32,7 +32,7 @@ A personal revision tool built around protecting attention: zero decisions durin
 
 ## Capabilities and Constraints
 
-- Single user, behind Cloudflare Access + JWT re-verification in the Worker; the Claude key never reaches the browser.
+- A few invited users behind Cloudflare Access + JWT re-verification in the Worker. Content (subjects, cards) is shared; FSRS progress, sessions and parked thoughts are per user.
 - Import limits: 20 MB, magic-byte check, daily import quota.
 - Interface language: French.
 - Screens: Accueil, Import, Relecture, Session focus, Pause, Fin de session, Matières, Statistiques.

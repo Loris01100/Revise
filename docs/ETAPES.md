@@ -15,7 +15,6 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 - [x] Sous-domaine : `revise.reesch.com`
 - [x] Installer les outils : Node.js, `wrangler`, Rust + cible `wasm32-unknown-unknown`, `wasm-pack`
 - [x] `wrangler login` sur le compte Cloudflare qui possède le domaine
-- [ ] Console Claude : créer une clé API dédiée à Revise et fixer une **limite de dépense mensuelle**
 
 ---
 
@@ -51,7 +50,7 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 - [x] Route personnalisée `revise.reesch.com` (custom domain)
 - [x] `workers_dev = false`
 - [x] `preview_urls = false`
-- [x] Variables : `CLAUDE_MODEL` (défaut `claude-sonnet-5-5`), `TEAM_DOMAIN`, `POLICY_AUD`, `OWNER_EMAIL`
+- [x] Variables : `TEAM_DOMAIN`, `POLICY_AUD` (`OWNER_EMAIL` retiré au passage multi-utilisateur)
 
 ### 1.4 Cloudflare Access (Zero Trust)
 
@@ -66,7 +65,7 @@ Sur chaque route `/api/*` :
 - [x] Lire l'en-tête `Cf-Access-Jwt-Assertion` (pas le cookie `CF_Authorization`)
 - [x] Vérifier la signature RS256 avec les clés de `https://<équipe>.cloudflareaccess.com/cdn-cgi/access/certs` (`jose`, `createRemoteJWKSet`)
 - [x] Vérifier `aud = POLICY_AUD` et `iss = TEAM_DOMAIN`
-- [x] Vérifier `email = OWNER_EMAIL`, sinon **403**
+- [x] ~~Vérifier `email = OWNER_EMAIL`~~ — remplacé : la policy Access est la seule liste des invités, l'e-mail du JWT identifie la personne (`c.var.user`)
 
 ### 1.6 Base de données D1
 
@@ -243,14 +242,15 @@ Vérification du rendu :
 - [ ] PWA installable + hors ligne (réviser sans réseau)
   - [ ] `/transpose` + `/impeccable adapt` : expérience mobile au doigt
   - [ ] `/fortify` : comportement hors ligne et synchronisation
-- [ ] Si le copier-coller devient pénible : génération par l'API Claude (clé payante, limite de dépense)
 - [ ] Export des cartes
+- [x] Plusieurs personnes : contenu partagé (matières, cartes, dessins), progression propre à chacun (`card_state`, `reviews`, `sessions`, `parked_thoughts` par `user_id`) — migration `0003_users.sql`
+  - Inviter : Zero Trust → Access → Applications → Revise → Policies → ajouter l'e-mail à la règle Allow
 
 ---
 
 ## Checklist sécurité finale
 
-- [ ] Access actif, une seule règle Allow (ton e-mail)
+- [ ] Access actif, une seule règle Allow (e-mails invités uniquement)
 - [ ] JWT revérifié dans le Worker sur toutes les routes `/api/*`
 - [x] `workers_dev = false` et `preview_urls = false`
 - [ ] Garde-fou import : 1 Mo de texte collé, validation par le cœur Rust

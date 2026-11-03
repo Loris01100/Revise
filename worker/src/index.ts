@@ -1,17 +1,19 @@
 import { Hono } from "hono";
-import { requireOwner } from "./auth";
+import { requireUser } from "./auth";
 import api from "./routes";
 
 export interface Env {
   DB: D1Database;
   TEAM_DOMAIN: string;
   POLICY_AUD: string;
-  OWNER_EMAIL: string;
 }
 
-const app = new Hono<{ Bindings: Env }>();
+// user : e-mail Access en minuscules, posé par requireUser
+export type App = { Bindings: Env; Variables: { user: string } };
 
-app.use("/api/*", requireOwner);
+const app = new Hono<App>();
+
+app.use("/api/*", requireUser);
 
 app.route("/api", api);
 app.all("/api/*", (c) => c.json({ error: "not_found" }, 404));
