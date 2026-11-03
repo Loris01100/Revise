@@ -1190,6 +1190,32 @@ p.empty {
   grid-template-columns: 2fr 1fr 1fr;
   gap: 8px;
 }
+.review-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 24px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.review-status .link {
+  color: var(--ink);
+}
+.end .review-status {
+  margin: 8px 0 0;
+}
+@media (pointer: coarse) {
+  .review-status {
+    min-height: 44px;
+    margin-bottom: 4px;
+  }
+  .review-status .link {
+    min-height: 44px;
+    padding-inline: 8px;
+    margin-inline: -8px;
+  }
+}
 
 /* --- Téléphone --- */
 

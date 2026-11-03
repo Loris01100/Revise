@@ -93,6 +93,17 @@ export default function Review(p: { id: string }) {
     }
   }
 
+  // Confirmation au-dessus des boutons, hauteur réservée : rien ne bouge sous le pouce
+  const Status = () => (
+    <p class="review-status" role="status">
+      <Show when={pending()}>
+        {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}
+        <button class="link" onClick={undo}>
+          Annuler
+        </button>
+      </Show>
+    </p>
+  );
   return (
     <div class="page review" style={hl(subject()?.color)}>
       <header class="bar">
@@ -120,6 +131,7 @@ export default function Review(p: { id: string }) {
                 ? `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"} : ${part(accepted(), "acceptée")}${deleted() ? `, ${part(deleted(), "supprimée")}` : ""}.`
                 : `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"}, aucune acceptée.`}
             </h1>
+            <Status />
             <div class="stack">
               <Show
                 when={accepted()}
@@ -187,6 +199,7 @@ export default function Review(p: { id: string }) {
               </Show>
 
               <div class="grades-dock">
+                <Status />
                 <Show when={lost()}>
                   <p class="notice error" role="alert">
                     La carte précédente n'a pas été acceptée. Elle reviendra à la prochaine relecture.
@@ -231,14 +244,6 @@ export default function Review(p: { id: string }) {
         </Match>
       </Switch>
 
-      <Show when={pending()}>
-        <div class="toast" role="status">
-          {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}
-          <button class="link" onClick={undo}>
-            Annuler
-          </button>
-        </div>
-      </Show>
     </div>
   );
 }
