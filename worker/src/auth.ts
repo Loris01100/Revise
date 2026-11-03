@@ -7,9 +7,9 @@ let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
 
 // Qui entre : la policy Access (seule liste des invités). Ici : JWT vérifié, puis l'e-mail identifie la personne.
 export const requireUser = createMiddleware<App>(async (c, next) => {
-  const { TEAM_DOMAIN, POLICY_AUD } = c.env;
+  const { TEAM_DOMAIN, POLICY_AUD, ADMIN_EMAIL } = c.env;
   // Config incomplète : on refuse tout plutôt que d'ouvrir
-  if (!TEAM_DOMAIN || !POLICY_AUD) return c.json({ error: "config" }, 500);
+  if (!TEAM_DOMAIN || !POLICY_AUD || !ADMIN_EMAIL) return c.json({ error: "config" }, 500);
 
   const token = c.req.header("Cf-Access-Jwt-Assertion");
   if (!token) return c.json({ error: "unauthenticated" }, 401);
@@ -23,6 +23,7 @@ export const requireUser = createMiddleware<App>(async (c, next) => {
     });
     if (typeof payload.email !== "string" || !payload.email) return c.json({ error: "forbidden" }, 403);
     c.set("user", payload.email.toLowerCase());
+    c.set("admin", c.var.user === ADMIN_EMAIL.toLowerCase());
   } catch {
     return c.json({ error: "unauthenticated" }, 401);
   }

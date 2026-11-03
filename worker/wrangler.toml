@@ -28,3 +28,5 @@ migrations_dir = "migrations"
 [vars]
 TEAM_DOMAIN = "https://young-brook-6906.cloudflareaccess.com"
 POLICY_AUD = "a38ce0026d37977463d6723c2479e6b13000e3b4da1b65a38095e3dcc2551359"
+# Seul compte qui peut supprimer du contenu ; les autres invités créent et modifient
+ADMIN_EMAIL = "lolobach01100@gmail.com"

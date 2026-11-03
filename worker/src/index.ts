@@ -6,10 +6,11 @@ export interface Env {
   DB: D1Database;
   TEAM_DOMAIN: string;
   POLICY_AUD: string;
+  ADMIN_EMAIL: string;
 }
 
-// user : e-mail Access en minuscules, posé par requireUser
-export type App = { Bindings: Env; Variables: { user: string } };
+// user : e-mail Access en minuscules ; admin : user = ADMIN_EMAIL. Posés par requireUser
+export type App = { Bindings: Env; Variables: { user: string; admin: boolean } };
 
 const app = new Hono<App>();
 

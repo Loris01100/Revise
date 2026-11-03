@@ -21,6 +21,8 @@ export default function Subjects(p: { id?: string }) {
     (id) => api<Card[]>("GET", `/subjects/${id}/cards`),
   );
   const reload = () => Promise.all([reloadCards(), reloadSubjects()]);
+  // Seul l'admin supprime ; caché tant que les droits ne sont pas connus
+  const [me] = createResource(() => api<{ admin: boolean }>("GET", "/me"));
   const drafts = () => (cards.latest ?? []).filter((c) => c.status === "draft").length;
   // Rangées réconciliées par id : un rechargement garde les mêmes nœuds, donc le focus
   const [rows, setRows] = createStore<Card[]>([]);
@@ -255,9 +257,11 @@ export default function Subjects(p: { id?: string }) {
                                   >
                                     {c.status === "active" ? "Suspendre" : c.status === "draft" ? "Accepter" : "Réactiver"}
                                   </button>
-                                  <button class="link" onClick={() => (setToast(null), setDeleting(c))}>
-                                    Supprimer
-                                  </button>
+                                  <Show when={me()?.admin}>
+                                    <button class="link" onClick={() => (setToast(null), setDeleting(c))}>
+                                      Supprimer
+                                    </button>
+                                  </Show>
                                 </div>
                               </td>
                             </tr>

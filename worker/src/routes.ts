@@ -52,6 +52,9 @@ const ensureStates = (db: D1Database, user: string, t: string) =>
     )
     .bind(user, t);
 
+// Droits de la personne connectée : l'interface cache ce qu'elle ne peut pas faire
+api.get("/me", (c) => c.json({ admin: c.var.admin }));
+
 api.get("/subjects", async (c) => {
   const t = now();
   const [, { results }] = await c.env.DB.batch([
@@ -110,6 +113,8 @@ api.post("/cards", async (c) => {
 api.patch("/cards/:id", async (c) => {
   const f = cardFields(await body(c));
   if (typeof f === "string") return bad(c, f);
+  // Repasser une carte en brouillon la rendrait supprimable par tous
+  if (f.status === "draft" && !c.var.admin) return bad(c, "status");
   const cols = Object.keys(f);
   if (!cols.length) return bad(c, "body");
   const id = c.req.param("id");
@@ -117,8 +122,11 @@ api.patch("/cards/:id", async (c) => {
   return res.meta.changes ? c.body(null, 204) : notFound(c);
 });
 
+// Admin : toute carte. Les autres : seulement les brouillons, écarter un import fait partie de la création
 api.delete("/cards/:id", async (c) => {
-  const res = await c.env.DB.prepare("DELETE FROM cards WHERE id = ?").bind(c.req.param("id")).run();
+  const res = await c.env.DB.prepare("DELETE FROM cards WHERE id = ? AND (? OR status = 'draft')")
+    .bind(c.req.param("id"), +c.var.admin)
+    .run();
   return res.meta.changes ? c.body(null, 204) : notFound(c);
 });
 
