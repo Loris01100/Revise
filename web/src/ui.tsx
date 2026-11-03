@@ -1,4 +1,4 @@
-import { For, createEffect, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
+import { For, Show, createEffect, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
 import { api, type Card, type CardType, type Color } from "./api";
 
 // --- Navigation : quelques chemins, sans routeur ---
@@ -129,6 +129,41 @@ export function Marked(p: { text: string; draw?: boolean }) {
     <For each={p.text.split(/==(.+?)==/)}>
       {(s, i) => (i() % 2 ? <mark classList={{ draw: p.draw }}>{s}</mark> : s)}
     </For>
+  );
+}
+
+/** Texte de carte : ```lang … ``` en bloc de code, ```mermaid … ``` en schéma, `…` en code ; le reste passe par Marked.
+ *  Tout est en <code>/<span> pour rester valide dans le <h1> de la question et le <p> de la réponse. */
+export function Rich(p: { text: string; draw?: boolean }) {
+  return (
+    <>
+      {p.text.split(/(```[^\n]*\n[\s\S]*?```|`[^`\n]+`)/).map((s, i) => {
+        if (i % 2 === 0) return <Marked text={s} draw={p.draw} />;
+        const m = s.match(/^```([^\n]*)\n([\s\S]*?)\n?```$/);
+        if (!m) return <code>{s.slice(1, -1)}</code>;
+        return m[1].trim() === "mermaid" ? <Diagram src={m[2]} /> : <code class="block">{m[2]}</code>;
+      })}
+    </>
+  );
+}
+
+let diagrams = 0;
+/** Schéma Mermaid, chargé à la première carte qui en contient ; source affichée si la syntaxe est fausse. */
+function Diagram(p: { src: string }) {
+  const [svg, setSvg] = createSignal<string | null>();
+  onMount(async () => {
+    const { default: m } = await import("mermaid");
+    const t = document.documentElement.dataset.theme;
+    const dark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    m.initialize({ startOnLoad: false, securityLevel: "strict", theme: dark ? "dark" : "neutral" });
+    if (!(await m.parse(p.src, { suppressErrors: true }))) return setSvg(null);
+    setSvg((await m.render(`diagram-${++diagrams}`, p.src)).svg);
+  });
+  return (
+    <Show when={svg() !== null} fallback={<code class="block">{p.src}</code>}>
+      {/* SVG nettoyé par Mermaid (securityLevel strict) */}
+      <span class="diagram" innerHTML={svg() ?? ""} />
+    </Show>
   );
 }
 

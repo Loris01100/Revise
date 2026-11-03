@@ -806,6 +806,34 @@ a.row:hover {
   color: var(--ink-2);
   white-space: pre-wrap;
 }
+/* Code et schémas des cartes : à leur taille de lecture, quel que soit le texte autour (titre, réponse) */
+.card code {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.85em;
+  font-weight: 400;
+  background: var(--rule);
+}
+.card code.block,
+.card .diagram {
+  display: block;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: start;
+}
+.card code.block {
+  padding: 12px 14px;
+  border-radius: var(--r);
+  white-space: pre;
+  tab-size: 2;
+}
+.card .diagram svg {
+  max-width: 100%;
+  height: auto;
+}
 .grades-dock {
   margin-top: 40px;
   padding: 16px 0;

@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createResource, createSignal, on, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
 import { api, enqueue, release, stalled, waitingReviews, type Parked, type Subject } from "./api";
-import { Cloze, Dialog, Icon, Marked, announce, arrows, duration, focusFree, go, hl, one, plain, setRun, settings, start, type Run } from "./ui";
+import { Cloze, Dialog, Icon, Rich, announce, arrows, duration, focusFree, go, hl, one, plain, setRun, settings, start, type Run } from "./ui";
 
 const GRADES = [
   [1, "À revoir", "La carte revient aujourd'hui."],
@@ -305,7 +305,7 @@ export default function Session(p: { run: Run }) {
               <p class="muted small">{timed} min, puis une pause.</p>
             </Show>
             <h1 id="q" class="q" classList={{ revealed: cur().revealed }}>
-              <Show when={card().type === "cloze"} fallback={plain(card().question)}>
+              <Show when={card().type === "cloze"} fallback={<Rich text={card().question} />}>
                 <Cloze text={card().question} fill={cur().revealed ? plain(card().answer) : undefined} />
               </Show>
             </h1>
@@ -406,12 +406,12 @@ export default function Session(p: { run: Run }) {
                     Réponse
                   </h2>
                   <p class="answer">
-                    <Marked text={card().answer} draw />
+                    <Rich text={card().answer} draw />
                   </p>
                 </section>
               </Show>
               <Show when={card().explanation}>
-                <p class="explanation">{card().explanation}</p>
+                <p class="explanation"><Rich text={card().explanation!} /></p>
               </Show>
 
               <div class="grades-dock">

@@ -9,6 +9,8 @@ pub const MAX_QUESTION: usize = 500;
 pub const MAX_ANSWER: usize = 1000;
 pub const MAX_EXPLANATION: usize = 500;
 pub const MAX_CHOICE: usize = 200;
+/// Blocs ``` (code, schémas) d'un champ, comptés à part : ils ne se lisent pas comme du texte.
+pub const MAX_CODE: usize = 2000;
 /// L'éditeur affiche au plus 4 propositions.
 pub const MAX_CHOICES: usize = 4;
 
@@ -64,16 +66,20 @@ pub fn validate(text: &str, existing: &[String]) -> Result<Report, String> {
     Ok(report)
 }
 
-/// Tableau JSON du texte : dans le premier bloc ``` s'il y en a un, entre le premier `[` et le dernier `]`.
+/// Tableau JSON du texte : le premier `[` qui ouvre un tableau d'objets, lu jusqu'à son `]`.
+/// Le texte autour (```json, remarques) est ignoré ; les ``` dans les champs restent intacts.
 fn extract(text: &str) -> Result<Vec<Value>, String> {
-    let body = text.split("```").nth(1).unwrap_or(text);
-    let (Some(start), Some(end)) = (body.find('['), body.rfind(']')) else {
-        return Err("aucun tableau JSON trouvé".into());
-    };
-    if end < start {
-        return Err("aucun tableau JSON trouvé".into());
-    }
-    let items: Vec<Value> = serde_json::from_str(&body[start..=end]).map_err(|e| format!("JSON invalide : {e}"))?;
+    let start = text
+        .match_indices('[')
+        .map(|(i, _)| i)
+        .find(|&i| text[i + 1..].trim_start().starts_with(['{', ']']))
+        .or_else(|| text.find('[').filter(|&i| !text[i + 1..].trim().is_empty()))
+        .ok_or("aucun tableau JSON trouvé")?;
+    let items: Vec<Value> = serde_json::Deserializer::from_str(&text[start..])
+        .into_iter()
+        .next()
+        .ok_or("aucun tableau JSON trouvé")?
+        .map_err(|e| format!("JSON invalide : {e}"))?;
     if items.is_empty() {
         return Err("le tableau ne contient aucune carte".into());
     }
@@ -91,9 +97,15 @@ fn text(v: &Value, field: &str, max: usize) -> Result<String, String> {
     if s.is_empty() {
         return Err(format!("« {field} » manquant"));
     }
-    let n = s.chars().count();
+    let (mut n, mut code) = (0, 0);
+    for (i, part) in s.split("```").enumerate() {
+        *if i % 2 == 1 { &mut code } else { &mut n } += part.chars().count();
+    }
     if n > max {
         return Err(format!("« {field} » trop long ({n} caractères, {max} au plus)"));
+    }
+    if code > MAX_CODE {
+        return Err(format!("code de « {field} » trop long ({code} caractères, {MAX_CODE} au plus)"));
     }
     Ok(s.to_string())
 }
@@ -222,6 +234,14 @@ mod tests {
         assert!(reason(&format!(r#"{{"type":"qa","question":"{q}","answer":"R"}}"#)).contains("trop long (501"));
         let e = "é".repeat(MAX_EXPLANATION); // compté en caractères, pas en octets
         assert_eq!(one(&format!(r#"{{"type":"qa","question":"Q","answer":"R","explanation":"{e}"}}"#)).cards.len(), 1);
+        // Les blocs ``` ne comptent pas dans la limite du texte, mais ont la leur
+        let c = "x".repeat(MAX_QUESTION);
+        assert_eq!(one(&format!(r#"{{"type":"qa","question":"Que fait ce code ?\n```js\n{c}\n```","answer":"R"}}"#)).cards.len(), 1);
+        let c = "x".repeat(MAX_CODE + 1);
+        assert!(reason(&format!(r#"{{"type":"qa","question":"Q\n```js\n{c}```","answer":"R"}}"#)).contains("code de « question » trop long"));
+        // Collé depuis Claude : le bloc ```json qui entoure le tout ne coupe pas le code des champs
+        let fenced = "Voici :\n```json\n[{\"type\":\"qa\",\"question\":\"Q\\n```py\\nx = [1]\\n```\",\"answer\":\"R\"}]\n```\nBonne révision [ok]";
+        assert_eq!(validate(fenced, &[]).unwrap().cards[0].question, "Q\n```py\nx = [1]\n```");
     }
 
     #[test]

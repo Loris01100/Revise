@@ -59,6 +59,11 @@ typography:
     fontSize: "13px"
     fontWeight: 700
     lineHeight: 1.5
+  code:
+    fontFamily: "ui-monospace, Cascadia Code, Consolas, monospace"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.5
 rounded:
   r: "4px"
   dialog: "6px"
@@ -185,7 +190,7 @@ Une palette d'encre et de papier, presque achromatique, que seuls les cinq surli
 **Display Font:** Atkinson Hyperlegible (avec system-ui, sans-serif)
 **Body Font:** Atkinson Hyperlegible (avec system-ui, sans-serif)
 
-**Character:** Une seule famille, choisie pour la lisibilité, servie localement par @fontsource. La hiérarchie se fait par la taille et le passage 400 → 700, jamais par une seconde police ni par les capitales.
+**Character:** Une seule famille, choisie pour la lisibilité, servie localement par @fontsource. La hiérarchie se fait par la taille et le passage 400 → 700, jamais par une seconde police ni par les capitales. Seule exception : le code des cartes, en chasse fixe système.
 
 ### Hierarchy
 - **Display** (700, clamp 48–72 px, 1,1, chiffres tabulaires) : le minuteur de la pause, seul.
@@ -194,6 +199,7 @@ Une palette d'encre et de papier, presque achromatique, que seuls les cinq surli
 - **Title-sm** (700, 19 px) : mot-symbole Revise, titre de barre, titres de section du bilan, titre « Pause ».
 - **Body-lg** (400, 19 px) : choix de QCM, champ de réponse ; la réponse correcte est à 21 px en 700.
 - **Body** (400, 17 px, 1,5) : texte courant ; explications limitées à 68ch.
+- **Code** (400, chasse fixe système) : blocs de code des cartes à 15 px / 1,5 sur fond `--rule` (schémas Mermaid à la même taille, sans fond), quel que soit le texte autour ; code en ligne à 0,85em.
 - **Label** (700, 15 px) : libellés de champ, titres de section des réglages et de liste (en encre atténuée), position « 3 / 5 » en chiffres tabulaires.
 - **Caption** (700, 13 px) : pastille « Cartes du jour », mention de choix (« Ton choix »), en-têtes de tableau. Jamais en capitales.
 

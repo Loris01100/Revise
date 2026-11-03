@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
 import { api, type Card, type Subject } from "./api";
 import { CardForm } from "./Subjects";
-import { Cloze, Icon, Link, Marked, TYPES, announce, cardsLabel, go, hl, one, plain, start } from "./ui";
+import { Cloze, Icon, Link, Rich, TYPES, announce, cardsLabel, go, hl, one, plain, start } from "./ui";
 
 const part = (n: number, word: string) => `${n} ${word}${one(n) ? "" : "s"}`;
 
@@ -166,7 +166,7 @@ export default function Review(p: { id: string }) {
                 {c().source_page ? ` · p. ${c().source_page}` : ""}
               </p>
               <h1 class="q revealed">
-                <Show when={c().type === "cloze"} fallback={plain(c().question)}>
+                <Show when={c().type === "cloze"} fallback={<Rich text={c().question} />}>
                   <Cloze text={c().question} fill={plain(c().answer)} />
                 </Show>
               </h1>
@@ -191,13 +191,13 @@ export default function Review(p: { id: string }) {
                       Réponse
                     </h2>
                     <p class="answer">
-                      <Marked text={c().answer} />
+                      <Rich text={c().answer} />
                     </p>
                   </section>
                 </Match>
               </Switch>
               <Show when={c().explanation}>
-                <p class="explanation">{c().explanation}</p>
+                <p class="explanation"><Rich text={c().explanation!} /></p>
               </Show>
 
               <div class="grades-dock">

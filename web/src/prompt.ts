@@ -38,6 +38,9 @@ Format de sortie : uniquement un bloc de code JSON, sans texte avant ni après. 
 ]
 \`\`\`
 - Dans "answer" des cartes "qa" et "explain", entoure de == le terme clé à retenir, un seul par réponse : "La demande baisse quand le prix monte : c'est l'==élasticité-prix==." Jamais de == dans "question", "choices", "explanation", ni dans "answer" des "mcq" et "cloze".
+- Si le cours contient du code (commandes, fichiers de configuration, extraits de programme), écris-le dans "question", "answer" ou "explanation" : en ligne entre \`accents graves\`, ou en bloc \`\`\`langage sur ses propres lignes. Pas de bloc de code dans "choices", ni dans les "cloze". Garde un extrait court : les lignes utiles à la notion.
+- Si une notion du cours est un schéma (architecture, UML, séquence, pipeline, états), tu peux le redessiner dans un bloc \`\`\`mermaid valide (flowchart, sequenceDiagram, classDiagram, stateDiagram-v2…), avec les libellés du cours. N'invente pas de schéma que le cours ne contient pas.
+- Dans le JSON, échappe les retours à la ligne en \\n et les guillemets en \\".
 - "choices" vaut null sauf pour "mcq".
 - "source_page" est le numéro de la page du cours où se trouve la notion, ou null si le document n'a pas de pages.`;
 }
