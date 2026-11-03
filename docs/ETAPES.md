@@ -166,7 +166,7 @@ Vérification du rendu :
 
 ### 2.5 Déploiement
 
-- [ ] Build : `wasm-pack build core --target bundler` → build `web` → `wrangler deploy`
+- [x] Build : `wasm-pack build core --target web` → build `web` → `wrangler deploy`
 
 ---
 
