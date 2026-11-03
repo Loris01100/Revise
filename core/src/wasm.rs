@@ -1,5 +1,6 @@
 //! Interface JS : JSON calqué sur les lignes D1, dates ISO 8601.
 
+use crate::cards;
 use crate::fsrs::{self, CardState};
 use crate::session::{self, SessionCard};
 use chrono::{DateTime, Utc};
@@ -83,6 +84,13 @@ pub fn schedule(state: &str, grade: u8, now: &str) -> Result<String, JsError> {
 #[wasm_bindgen]
 pub fn compose(cards: &str, quick5: bool, new_quota: usize, now: &str) -> Result<String, JsError> {
     compose_json(cards, quick5, new_quota, now).map_err(|e| JsError::new(&e))
+}
+
+/// Texte collé + questions déjà dans la matière (JSON) → `{cards, rejected}` (JSON).
+#[wasm_bindgen]
+pub fn validate_cards(text: &str, existing: &str) -> Result<String, JsError> {
+    let report = parse::<Vec<String>>(existing).and_then(|q| cards::validate(text, &q));
+    report.map(|r| serde_json::to_string(&r).unwrap()).map_err(|e| JsError::new(&e))
 }
 
 #[cfg(test)]

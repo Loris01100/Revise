@@ -188,11 +188,14 @@ Vérification du rendu :
 
 ### 3.2 Validation des cartes (`core/src/cards.rs`)
 
-- [ ] Lecture du JSON collé, tolérante (texte autour, bloc ```json)
-- [ ] Contrôle du schéma, carte par carte, avec la raison du rejet
-- [ ] Dédoublonnage (dans le lot et avec les cartes de la matière)
-- [ ] Rejet des cartes trop longues
-- [ ] Tests `cargo test`
+- [x] Lecture du JSON collé, tolérante (texte autour, bloc ```json)
+- [x] Contrôle du schéma, carte par carte, avec la raison du rejet
+  - QCM : 2 à 4 propositions distinctes, la réponse en fait partie ; texte à trous : un seul `___` ; `choices` ignoré hors QCM, `source_page` invalide oubliée
+- [x] Dédoublonnage (dans le lot et avec les cartes de la matière)
+  - Questions comparées sans casse, espaces ni ponctuation
+- [x] Rejet des cartes trop longues : question 500, réponse 1000, explication 500, proposition 200 caractères
+- [x] Tests `cargo test` : les deux vrais lots (partiel PDF, sujet DOCX) dans `core/tests/fixtures/`
+- [x] Export wasm `validate_cards(texte, questions existantes)` → `{cards, rejected}`
 
 ### 3.3 Route d'import
 

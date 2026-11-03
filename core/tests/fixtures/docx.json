@@ -1,0 +1,198 @@
+[
+  {
+    "type": "qa",
+    "question": "Quelles pratiques caractérisent une livraison « à la main » d'une API .NET, avant l'industrialisation CI/CD ?",
+    "answer": "Des déploiements manuels, des tests non automatisés et des dépendances jamais auditées.",
+    "choices": null,
+    "explanation": "Ces trois faiblesses justifient chacune une étape du pipeline : déploiement, test et sécurité.",
+    "source_page": null
+  },
+  {
+    "type": "cloze",
+    "question": "Une chaîne CI/CD complète enchaîne les étapes build → test → qualité → ___ → déploiement staging.",
+    "answer": "sécurité",
+    "choices": null,
+    "explanation": "La sécurité vient après la qualité et avant le passage en staging.",
+    "source_page": null
+  },
+  {
+    "type": "explain",
+    "question": "Quels manques présente une ébauche de pipeline réduite à un seul job de build ?",
+    "answer": "Elle se limite à un job build, sans aucune étape de test. Elle n'a ni contrôle de qualité ni contrôle de sécurité. Elle ne comporte pas non plus de déploiement, donc la livraison reste manuelle.",
+    "choices": null,
+    "explanation": "Ce sont exactement les étapes à ajouter pour obtenir l'architecture cible.",
+    "source_page": null
+  },
+  {
+    "type": "mcq",
+    "question": "Quels déclencheurs d'un pipeline CI/CD faut-il associer aux étapes et à la stratégie de branches ?",
+    "answer": "Le push et la merge request / pull request",
+    "choices": [
+      "Uniquement les tags de version",
+      "Le push et la merge request / pull request",
+      "Uniquement un déclenchement manuel",
+      "Une planification cron quotidienne"
+    ],
+    "explanation": "La merge request porte le nom de pull request sur GitHub.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quels trois éléments faut-il justifier dans l'ordonnancement des étapes d'un pipeline ?",
+    "answer": "L'ordre des étapes, le principe fail-fast et la circulation des artefacts entre les jobs.",
+    "choices": null,
+    "explanation": "Ces trois éléments répondent à l'exigence de rapidité de feedback.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quelles commandes dotnet composent les jobs de build et de packaging, et que doivent-ils produire ?",
+    "answer": "dotnet restore, dotnet build et dotnet publish, pour produire un artefact versionné.",
+    "choices": null,
+    "explanation": null,
+    "source_page": null
+  },
+  {
+    "type": "mcq",
+    "question": "Laquelle de ces faiblesses est citée pour le Dockerfile fourni avec l'API ?",
+    "answer": "L'exécution en root",
+    "choices": [
+      "L'absence de fichier .dockerignore",
+      "L'utilisation d'une image Alpine",
+      "L'exposition d'un port non standard",
+      "L'exécution en root"
+    ],
+    "explanation": "Les autres faiblesses citées sont l'image unique basée sur le SDK et l'absence de multi-stage.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quelles deux corrections sont recommandées pour un Dockerfile d'API .NET ?",
+    "answer": "Un build multi-stage et l'exécution avec un utilisateur non-root.",
+    "choices": null,
+    "explanation": "Ces corrections répondent à l'image unique basée sur le SDK et à l'exécution en root.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quelles opérations comprend le job de déploiement vers un conteneur Docker en staging ?",
+    "answer": "La construction de l'image, son tag, sa publication et son lancement.",
+    "choices": null,
+    "explanation": "Le tag d'image fait partie de la stratégie de versionnage du livrable.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quel framework sert aux tests unitaires et lequel aux tests fonctionnels dans la chaîne CI/CD de l'API .NET ?",
+    "answer": "MSTest pour les tests unitaires, Selenium pour les tests fonctionnels.",
+    "choices": null,
+    "explanation": "Les deux sont exécutés dans l'étape de tests via dotnet test.",
+    "source_page": null
+  },
+  {
+    "type": "explain",
+    "question": "Que doit faire l'étape de tests du pipeline, et pourquoi se place-t-elle avant le déploiement ?",
+    "answer": "Elle exécute les tests avec dotnet test et publie les résultats et la couverture sous forme d'artefacts. Elle bloque le pipeline dès qu'un test échoue. Placée après le build et avant le déploiement, elle sert de porte de qualité : rien n'arrive en staging sans avoir passé les tests.",
+    "choices": null,
+    "explanation": null,
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quels sont les seuils de remise de l'endpoint POST /api/products à couvrir par des cas limites ?",
+    "answer": "100 €, 200 € et 500 €.",
+    "choices": null,
+    "explanation": "Les tests aux seuils vérifient le comportement exactement à la frontière de chaque règle.",
+    "source_page": null
+  },
+  {
+    "type": "mcq",
+    "question": "Quelles catégories de produits ont des règles propres dans la méthode Create de l'API ?",
+    "answer": "accessoires, ecrans, autre",
+    "choices": [
+      "accessoires, ecrans, autre",
+      "materiel, logiciel, service",
+      "ecrans, claviers, souris",
+      "standard, premium, autre"
+    ],
+    "explanation": "Chaque catégorie doit être couverte par au moins un test.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Quels trois types de cas une suite de tests unitaires MSTest doit-elle couvrir pour un endpoint ?",
+    "answer": "Les cas nominaux, les cas limites et les cas d'erreur.",
+    "choices": null,
+    "explanation": "Pour POST /api/products, les cas d'erreur concernent les validations d'entrée.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Où stocker les secrets d'un pipeline au lieu de les écrire en clair ?",
+    "answer": "Dans les GitHub Secrets, ou dans des variables CI GitLab masquées et protégées.",
+    "choices": null,
+    "explanation": "L'ébauche de pipeline fournie contient des secrets en clair.",
+    "source_page": null
+  },
+  {
+    "type": "cloze",
+    "question": "La gestion des secrets d'un pipeline s'accompagne du principe de ___ privilège.",
+    "answer": "moindre",
+    "choices": null,
+    "explanation": "Chaque job ne reçoit que les accès dont il a besoin.",
+    "source_page": null
+  },
+  {
+    "type": "mcq",
+    "question": "Quel outil peut réaliser le scan des dépendances d'un projet .NET dans le pipeline ?",
+    "answer": "OWASP Dependency-Check",
+    "choices": [
+      "OWASP ZAP",
+      "Selenium",
+      "OWASP Dependency-Check",
+      "SonarScanner for .NET"
+    ],
+    "explanation": "L'autre option est la commande dotnet list package --vulnerable ; OWASP ZAP sert à l'analyse dynamique.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Contre quel environnement lance-t-on l'analyse dynamique OWASP ZAP ?",
+    "answer": "Contre l'environnement de staging.",
+    "choices": null,
+    "explanation": "Une analyse dynamique a besoin d'une application déployée et en cours d'exécution.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Citez quatre types de vulnérabilités à rechercher lors de l'audit d'une API .NET et de ses dépendances.",
+    "answer": "Des packages NuGet obsolètes, des secrets ou chaînes de connexion en dur, une absence de validation d'entrée (risque d'injection) et une configuration non sécurisée.",
+    "choices": null,
+    "explanation": "Pour chacune, il faut classer la criticité, expliquer le risque et proposer une remédiation.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Citez quatre catégories de défauts relevant des principes du Clean Code.",
+    "answer": "Le nommage, la duplication, la complexité et les responsabilités mêlées.",
+    "choices": null,
+    "explanation": "Chaque défaut relevé doit être rattaché au principe qu'il enfreint.",
+    "source_page": null
+  },
+  {
+    "type": "qa",
+    "question": "Sur quels indicateurs fixe-t-on les seuils d'une quality gate SonarQube ?",
+    "answer": "La couverture, les code smells, les vulnérabilités et le taux de duplication.",
+    "choices": null,
+    "explanation": "La quality gate est configurée via SonarScanner for .NET et bloque le pipeline si elle échoue.",
+    "source_page": null
+  },
+  {
+    "type": "explain",
+    "question": "Quels principes guident le refactoring d'une classe problématique, et quels bénéfices doit-il apporter ?",
+    "answer": "Le refactoring applique les principes du Clean Code et de SOLID à une classe qui mêle plusieurs responsabilités, contient de la duplication ou une complexité élevée. On le présente sous forme avant / après commentée. Il doit améliorer la maintenabilité, la testabilité et l'évolutivité du code.",
+    "choices": null,
+    "explanation": null,
+    "source_page": null
+  }
+]
