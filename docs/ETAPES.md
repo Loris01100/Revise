@@ -79,7 +79,7 @@ Sur chaque route `/api/*` :
 
 - [x] Worker « hello » + page statique minimale
 - [x] `wrangler deploy`
-- [ ] Test en navigation privée : l'écran de connexion Access apparaît
+- [x] Test en navigation privée : l'écran de connexion Access apparaît
 - [x] Test `curl https://revise.reesch.com/api/subjects` → refusé (302 vers la connexion Access)
 - [x] Vérifier que l'URL `*.workers.dev` ne répond pas
 
@@ -92,7 +92,7 @@ Sur chaque route `/api/*` :
 ### 2.1 Cœur Rust (`core/`)
 
 - [ ] `src/fsrs.rs` : fonction pure `schedule(state, grade, now) -> state`
-  - [ ] Choisir la crate : `rs-fsrs` (léger) ou `fsrs` (officiel, plus lourd) — **vérifier qu'elle compile en `wasm32-unknown-unknown`**
+  - [x] Crate : **`rs-fsrs` 1.2** — compile en `wasm32-unknown-unknown` (`fsrs` 6.6 échoue : `getrandom` sans `wasm_js`, et embarque `burn`). Attention : ne pas utiliser `Card::new()` (appelle `Utc::now()`, panique en WASM) ; construire la carte avec `now` passé en paramètre
   - [ ] Rétention cible : 90 %
   - [ ] Notes : 1 « à revoir », 2 « difficile », 3 « bien », 4 « facile »
 - [ ] `src/session.rs` : composition d'une session
