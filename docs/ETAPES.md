@@ -42,11 +42,11 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 ### 1.2 Ressources Cloudflare
 
 - [x] `wrangler d1 create revise`
-- [ ] `wrangler r2 bucket create revise-imports` (**aucun domaine public**) — reporté en phase 3 : activer R2 dans le dashboard (moyen de paiement demandé, palier gratuit), puis remettre la liaison `IMPORTS` dans `wrangler.toml`
+- [x] ~~`wrangler r2 bucket create revise-imports`~~ — abandonné : l'import se fait par copier-coller, sans fichier stocké
 
 ### 1.3 `wrangler.toml`
 
-- [x] Liaison D1 (`revise`) ; liaison R2 en phase 3
+- [x] Liaison D1 (`revise`)
 - [x] Static assets → `web/dist`
 - [x] Route personnalisée `revise.reesch.com` (custom domain)
 - [x] `workers_dev = false`
@@ -170,60 +170,46 @@ Vérification du rendu :
 
 ---
 
-## Phase 3 — Import intelligent
+## Phase 3 — Import par copier-coller
 
-> **Terminé quand** un cours de 20 pages donne des cartes exploitables en moins de deux minutes.
+> Sans API payante : Claude (claude.ai ou Claude Code, avec l'abonnement) lit le cours et renvoie les cartes en JSON ; Revise valide et range.
+>
+> **Terminé quand** un cours de 20 pages donne des cartes exploitables en moins de cinq minutes, copier-coller compris.
 
-### 3.1 Secret
+### 3.1 Prompt de génération (`web/src/prompt.ts`)
 
-- [ ] `wrangler secret put ANTHROPIC_API_KEY` (jamais envoyée au navigateur)
-
-### 3.2 Extraction DOCX (`core/src/docx.rs`)
-
-- [ ] Ouvrir l'archive ZIP, lire `word/document.xml`
-- [ ] Produire un Markdown qui conserve titres et listes
-- [ ] Tests `cargo test` avec un DOCX d'exemple
-
-### 3.3 Validation des cartes (`core/src/cards.rs`)
-
-- [ ] Contrôle du schéma
-- [ ] Dédoublonnage
-- [ ] Rejet des cartes trop longues
-
-### 3.4 Appel Claude (`worker/src/claude.ts`)
-
-- [ ] `POST https://api.anthropic.com/v1/messages` avec `CLAUDE_MODEL`
-- [ ] Outil `save_cards` avec schéma JSON, forcé via `tool_choice`
+- [ ] Prompt prêt à copier : une notion par carte, en français, rappel actif plutôt que reconnaissance, couvrir toutes les notions clés, citer la page source, ne rien inventer
+- [ ] Format de sortie imposé : un seul bloc JSON, tableau de cartes
   - Champs : `type`, `question`, `answer`, `choices` (QCM), `explanation`, `source_page`, `difficulty`
-- [ ] PDF → bloc `document` base64 (limites : 32 Mo/requête, 600 pages — 100 pour les modèles 200k)
-- [ ] DOCX → Markdown du cœur Rust dans un bloc `text`
-- [ ] Prompt système : une notion par carte, en français, rappel actif plutôt que reconnaissance, couvrir toutes les notions clés, citer la page source, ne rien inventer
-- [ ] Streaming : relayer le flux de Claude au navigateur pour afficher la progression
-- [ ] Enregistrer `tokens_in` / `tokens_out` dans `sources`
+- [ ] Le nombre de cartes et les types choisis sont insérés dans le prompt
+- [ ] Essai à la main sur un vrai cours PDF et DOCX, puis ajustement du prompt
 
-### 3.5 Route d'import
+### 3.2 Validation des cartes (`core/src/cards.rs`)
 
-- [ ] `POST /api/imports` (multipart : fichier, matière, nombre de cartes, types)
-  - [ ] Taille max **20 Mo**
-  - [ ] Octets magiques : `%PDF` (PDF) / `PK` (DOCX)
-  - [ ] **Quota d'imports par jour** stocké dans D1
-  - [ ] Stocker l'original dans R2 (`imports/<id>.pdf|docx`)
-  - [ ] Créer la ligne `sources` en `processing` → `ready` / `failed` (+ `error`)
-  - [ ] Valider via le cœur Rust puis insérer les cartes en `draft`
-- [ ] `GET /api/imports/:id` — statut + cartes brouillon
+- [ ] Lecture du JSON collé, tolérante (texte autour, bloc ```json)
+- [ ] Contrôle du schéma, carte par carte, avec la raison du rejet
+- [ ] Dédoublonnage (dans le lot et avec les cartes de la matière)
+- [ ] Rejet des cartes trop longues
+- [ ] Tests `cargo test`
 
-### 3.6 Frontend
+### 3.3 Route d'import
 
-- [ ] Design : `/journey` (import → génération → relecture), `/wireframe` Import et Relecture, `/fortify` (fichier refusé, quota atteint, génération échouée ou lente), `/articulate` (messages d'erreur et de progression)
-- [ ] **Import** : dépôt du fichier, choix matière / nombre / types (question / réponse, texte à trous, QCM, réponse longue), progression en direct
+- [ ] `POST /api/imports` (JSON : matière, texte collé), taille max **1 Mo**
+- [ ] Valider via le cœur Rust puis insérer les cartes en `draft` (`source_id` vide)
+- [ ] Réponse : cartes créées + cartes rejetées avec leur raison
+
+### 3.4 Frontend
+
+- [ ] Design : `/journey` (copier le prompt → Claude → coller → relecture), `/wireframe` Import et Relecture, `/fortify` (JSON invalide, cartes rejetées, collage vide), `/articulate` (consignes et erreurs)
+- [ ] **Import** : choix matière / nombre / types (question / réponse, texte à trous, QCM, réponse longue), bouton « Copier le prompt », zone de collage
 - [ ] **Relecture** : cartes brouillon une par une → accepter / modifier / supprimer
 - [ ] Seules les cartes acceptées reçoivent un `card_state` et entrent en révision
 - [ ] `/impeccable critique`, `audit` et `polish` sur Import et Relecture
 
-### 3.7 Vérification
+### 3.5 Vérification
 
-- [ ] Tester avec un cours de 20 pages : < 2 min, cartes exploitables
-- [ ] Surveiller le temps CPU (palier gratuit) ; si un gros DOCX dépasse → Workers Paid (5 $/mois)
+- [ ] Tester avec un cours de 20 pages : < 5 min, cartes exploitables
+- [ ] Nettoyage : retirer `CLAUDE_MODEL` de `wrangler.toml` et de `worker/src/index.ts`
 
 ---
 
@@ -235,8 +221,7 @@ Vérification du rendu :
 - [ ] PWA installable + hors ligne (réviser sans réseau)
   - [ ] `/transpose` + `/impeccable adapt` : expérience mobile au doigt
   - [ ] `/fortify` : comportement hors ligne et synchronisation
-- [ ] Import par chapitres (gros PDF au-delà des limites de l'API)
-- [ ] Cloudflare Queues pour traiter les gros documents en arrière-plan
+- [ ] Si le copier-coller devient pénible : génération par l'API Claude (clé payante, limite de dépense)
 - [ ] Export des cartes
 
 ---
@@ -246,6 +231,4 @@ Vérification du rendu :
 - [ ] Access actif, une seule règle Allow (ton e-mail)
 - [ ] JWT revérifié dans le Worker sur toutes les routes `/api/*`
 - [x] `workers_dev = false` et `preview_urls = false`
-- [ ] Bucket R2 privé
-- [ ] `ANTHROPIC_API_KEY` en secret, limite de dépense définie dans la console Claude
-- [ ] Garde-fous import : 20 Mo, octets magiques, quota journalier
+- [ ] Garde-fou import : 1 Mo de texte collé, validation par le cœur Rust

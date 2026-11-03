@@ -23,7 +23,7 @@ database_name = "revise"
 database_id = "6a81be5a-a178-4572-b2d7-0d331340285e"
 migrations_dir = "migrations"
 
-# R2 (bucket revise-imports) ajouté en phase 3, avec l'import de fichiers
+# Pas de R2 : l'import se fait par copier-coller (phase 3)
 
 [vars]
 CLAUDE_MODEL = "claude-sonnet-5-5"

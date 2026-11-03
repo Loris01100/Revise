@@ -31,8 +31,8 @@ Revise peut donc retirer chaque décision du chemin : le cours devient des carte
 ## Constraints
 
 - Une seule personne pour concevoir, construire et utiliser. Pas de date imposée.
-- Un Worker Cloudflare : Hono, cœur Rust en WebAssembly, D1, R2, SolidJS. Le temps CPU par requête est limité sur le palier gratuit.
-- Coût variable limité à l'API Claude, avec une limite de dépense mensuelle. Import limité à 20 Mo, avec un quota par jour.
+- Un Worker Cloudflare : Hono, cœur Rust en WebAssembly, D1, SolidJS. Le temps CPU par requête est limité sur le palier gratuit.
+- Aucun coût variable : les cartes sont générées par Claude hors de l'app (abonnement), puis collées en JSON. Collage limité à 1 Mo.
 - Interface en français uniquement. Un PDF de 600 pages au maximum par requête, au-delà découpage par chapitres.
 
 ## Guiding Principles
@@ -49,7 +49,7 @@ Hypothèses, chacune avec ce qui la réfute :
 1. **Si** l'accueil propose une seule action, « Réviser 5 cartes », **alors** les sessions démarrent plus souvent qu'avec un choix de paquet et de durée, **parce que** le coût de démarrage est le principal frein. Réfutée si, après trois semaines, moins de 5 jours sur 7 comptent une session.
 2. **Si** la session n'a ni navigation, ni notification, et offre un parking à pensées, **alors** au moins 80 % des sessions vont jusqu'au bilan, **parce que** les sorties viennent d'interruptions captées par l'interface. Réfutée si les abandons restent fréquents même sans aucune pensée parquée.
 3. **Si** l'accueil ne montre jamais l'arriéré, **alors** le retour après une absence de 3 jours ou plus se fait sans délai supplémentaire, **parce que** la dette visible décourage le redémarrage. Réfutée si les retours après absence restent plus rares que les sessions ordinaires.
-4. **Si** les cartes sont générées par Claude à partir du cours, **alors** au moins 70 % sont acceptées sans modification, **parce que** le prompt impose une notion par carte, la page source et le rappel actif. Réfutée si la relecture prend plus de temps que la rédaction à la main.
+4. **Si** les cartes sont générées par Claude à partir du cours, avec le prompt fourni par Revise, **alors** au moins 70 % sont acceptées sans modification, **parce que** le prompt impose une notion par carte, la page source et le rappel actif. Réfutée si la relecture prend plus de temps que la rédaction à la main.
 5. **Si** la réponse est tapée avant la correction, **alors** la rétention reste proche de 90 % sans rédaction des cartes par l'utilisateur, **parce que** l'effort de rappel en session porte la mémorisation [decisions.md, 2026-11-02, relecture]. Réfutée si la rétention mesurée reste sous 80 %.
 
 Questions ouvertes :
@@ -75,7 +75,7 @@ Dans l'ordre de la feuille de route [docs/ETAPES.md] :
 
 1. **Fondations** : accès protégé, base de données, déploiement.
 2. **Révision manuelle** : matières, cartes écrites à la main, FSRS, session focus (`quick5` et minutée), pause, parking à pensées, bilan de fin. Elle permet de tester les hypothèses 1, 2, 3 et 5 avant l'arrivée de l'IA.
-3. **Import** : PDF et DOCX, génération par Claude, relecture. Elle teste l'hypothèse 4.
+3. **Import** : prompt à copier, génération par Claude hors de l'app, collage du JSON, relecture. Elle teste l'hypothèse 4.
 
 Différé à la phase 4 : écran Statistiques, mode hors ligne, import par chapitres, traitement en arrière-plan, export.
 

@@ -230,3 +230,9 @@
 - Decided by: Claude, par défaut
 - Why: la confirmation n'était que lue au lecteur d'écran ; la barre du haut n'a pas la place sur téléphone, le bouton du geste si. Pendant la pause, la barre la porte.
 - Rests on: /impeccable critique du 2026-11-03.
+
+## 2026-11-03 · Import par copier-coller, sans API Claude payante
+- Decided by: l'utilisateur
+- Why: une clé API se facture à part de l'abonnement Claude ; pour une seule personne, un copier-coller de plus coûte moins qu'un crédit à surveiller. Claude lit lui-même le PDF ou le DOCX, ce qui supprime aussi l'extraction DOCX, le stockage R2 et le quota.
+- Rejected: l'API Claude (environ 0,15 $ par cours avec Sonnet 5.5), gardée en phase 4 si le copier-coller devient pénible.
+- Rests on: estimation du coût par cours du 2026-11-03.

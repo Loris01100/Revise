@@ -19,16 +19,16 @@ Application web personnelle (PWA installable), nouvelle, au stade MVP. Elle impo
 - Action principale de l'accueil : « Réviser 5 cartes » (`quick5`, les 5 cartes les plus en retard).
 - Rappel actif : la réponse est tapée avant la correction, puis notée de 1 à 4.
 - Parking à pensées : noter une pensée parasite sans quitter la session ; la liste revient en fin de session.
-- Aucun modèle économique : usage personnel, coûts plafonnés par les paliers gratuits Cloudflare et une limite de dépense sur l'API Claude.
+- Aucun modèle économique : usage personnel, coûts plafonnés par les paliers gratuits Cloudflare ; pas d'API payante, les cartes sont générées dans Claude (abonnement) puis collées.
 
 ## Constraints
 
-- **Technique** : un Worker Cloudflare (Hono, TypeScript), cœur Rust en WebAssembly, D1, R2, SolidJS. Temps CPU limité par requête sur le palier gratuit. Import limité à 20 Mo, quota d'imports par jour [PRODUCT.md].
+- **Technique** : un Worker Cloudflare (Hono, TypeScript), cœur Rust en WebAssembly, D1, SolidJS. Temps CPU limité par requête sur le palier gratuit. Collage limité à 1 Mo.
 - **Génération** : un PDF de plusieurs dizaines de pages prend jusqu'à une minute ; la progression est affichée en streaming.
 - **Accès** : une seule identité, derrière Cloudflare Access ; aucune donnée partagée.
 - **Langue** : interface en français uniquement.
 - **Équipe** : une personne, qui conçoit, construit et utilise. Aucun circuit de validation.
-- **Réglementaire** : aucun ; pas de tiers dont les données sont traitées. Le contenu des cours part vers l'API Claude.
+- **Réglementaire** : aucun ; pas de tiers dont les données sont traitées. Le contenu des cours est donné à Claude par l'utilisateur, hors de l'app.
 
 ## Ethical stance
 
