@@ -2,15 +2,15 @@ name = "revise"
 main = "src/index.ts"
 compatibility_date = "2026-11-01"
 
-# Recompile le cœur Rust avant dev et deploy
-[build]
-command = "wasm-pack build ../core --target web --release"
-watch_dir = ["src", "../core/src"]
-
 # Joignable uniquement par le domaine protégé par Access
 workers_dev = false
 preview_urls = false
 routes = [{ pattern = "revise.reesch.com", custom_domain = true }]
+
+# Recompile le cœur Rust avant dev et deploy (table TOML : à garder après les clés de premier niveau)
+[build]
+command = "wasm-pack build ../core --target web --release"
+watch_dir = ["src", "../core/src"]
 
 [assets]
 directory = "../web/dist"

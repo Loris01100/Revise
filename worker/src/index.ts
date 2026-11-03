@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { requireOwner } from "./auth";
-import "./core";
+import api from "./routes";
 
 export interface Env {
   DB: D1Database;
@@ -14,13 +14,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.use("/api/*", requireOwner);
 
-app.get("/api/subjects", async (c) => {
-  const { results } = await c.env.DB.prepare(
-    "SELECT id, name, color, created_at FROM subjects ORDER BY name",
-  ).all();
-  return c.json(results);
-});
-
+app.route("/api", api);
 app.all("/api/*", (c) => c.json({ error: "not_found" }, 404));
 
 export default app;

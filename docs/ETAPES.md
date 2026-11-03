@@ -106,17 +106,23 @@ Sur chaque route `/api/*` :
   - [x] Recompilé à chaque `wrangler dev` / `deploy` (section `[build]` de `wrangler.toml`)
   - [x] `schedule` et `compose` échangent du JSON calqué sur les lignes D1 (`card_state`, + `id`, `subject_id`, `type` pour `compose`)
 
-### 2.2 API (`worker/src/routes/`)
+### 2.2 API ([`worker/src/routes.ts`](../worker/src/routes.ts))
 
-- [ ] `GET /api/subjects` — matières + nombre de cartes dues
-- [ ] `POST /api/subjects` — créer une matière
-- [ ] Création manuelle de cartes (directement en `active` + ligne `card_state` initiale)
-- [ ] `PATCH /api/cards/:id` — modifier / accepter (`active`) / suspendre
-- [ ] `DELETE /api/cards/:id`
-- [ ] `POST /api/sessions` — ouvrir une session (`quick5`, `timed`, `subject`) et renvoyer la file
-- [ ] `POST /api/sessions/:id/reviews` — enregistrer la note, appeler `schedule`, mettre à jour `card_state`, insérer dans `reviews`
-- [ ] `POST /api/sessions/:id/end` — clôturer et renvoyer le bilan
-- [ ] `POST /api/parked` — noter une pensée parasite
+- [x] `GET /api/subjects` — matières + nombre de cartes actives et dues
+- [x] `POST /api/subjects` — créer une matière
+- [x] `GET /api/subjects/:id/cards` — cartes d'une matière (page Matières ; la recherche se fait côté client)
+- [x] `POST /api/cards` — création manuelle (directement en `active` + ligne `card_state` initiale)
+- [x] `PATCH /api/cards/:id` — modifier / accepter (`active`, crée la ligne `card_state` si absente) / suspendre
+- [x] `DELETE /api/cards/:id`
+- [x] `POST /api/sessions` — ouvrir une session (`quick5`, `timed`, `subject`) et renvoyer la file ; file vide = aucune session créée
+  - [x] Quota de nouvelles : 10 moins les cartes dont la première note date d'aujourd'hui (jour UTC)
+- [x] `POST /api/sessions/:id/reviews` — enregistrer la note, appeler `schedule`, mettre à jour `card_state`, insérer dans `reviews`
+  - [x] Idempotent sur l'`id` de la note, choisi par le client : la file hors ligne peut renvoyer une note sans la compter deux fois
+  - [x] `reviewed_at` facultatif : une note envoyée en retard est planifiée à l'heure où elle a été donnée
+- [x] `POST /api/sessions/:id/end` — clôturer (idempotent) et renvoyer le bilan avec les pensées non traitées
+- [x] `POST /api/parked` — noter une pensée parasite
+- [x] `PATCH /api/parked/:id` — « Fait » au bilan
+- [ ] Clôture automatique d'une session sans note depuis 30 min ([decisions.md](design/decisions.md))
 
 ### 2.3 Design (avant le code de l'interface)
 
