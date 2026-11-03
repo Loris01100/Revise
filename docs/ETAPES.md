@@ -12,9 +12,9 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 - [x] Nom : **Revise** (remplace « Ancre »)
 - [x] `/impeccable init` → [PRODUCT.md](../PRODUCT.md)
 - [ ] Génération de cartes depuis des images (photos de tableau, notes manuscrites) : oui / non / plus tard
-- [ ] Choisir le sous-domaine (ex. `revise.tondomaine.fr`)
-- [ ] Installer les outils : Node.js, `wrangler`, Rust + cible `wasm32-unknown-unknown`, `wasm-pack`
-- [ ] `wrangler login` sur le compte Cloudflare qui possède le domaine
+- [x] Sous-domaine : `revise.reesch.com`
+- [x] Installer les outils : Node.js, `wrangler`, Rust + cible `wasm32-unknown-unknown`, `wasm-pack`
+- [x] `wrangler login` sur le compte Cloudflare qui possède le domaine
 - [ ] Console Claude : créer une clé API dédiée à Revise et fixer une **limite de dépense mensuelle**
 
 ---
@@ -25,7 +25,7 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 
 ### 1.1 Monorepo
 
-- [ ] Créer la structure :
+- [x] Créer la structure :
   ```
   revise/
   ├── core/      # crate Rust → WASM (wasm-bindgen)
@@ -35,53 +35,53 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
   │   └── wrangler.toml
   └── web/       # frontend Vite + SolidJS
   ```
-- [ ] `worker/` : initialiser le projet TS, installer `hono` et `jose`
-- [ ] `web/` : initialiser Vite + SolidJS
-- [ ] `core/` : `cargo new --lib`, ajouter `wasm-bindgen`, `crate-type = ["cdylib", "rlib"]`
+- [x] `worker/` : initialiser le projet TS, installer `hono` et `jose`
+- [x] `web/` : initialiser Vite + SolidJS
+- [x] `core/` (crate `revise-core`, car `core` est réservé par Rust) : `cargo new --lib`, ajouter `wasm-bindgen`, `crate-type = ["cdylib", "rlib"]`
 
 ### 1.2 Ressources Cloudflare
 
-- [ ] `wrangler d1 create revise`
-- [ ] `wrangler r2 bucket create revise-imports` (**aucun domaine public**)
+- [x] `wrangler d1 create revise`
+- [ ] `wrangler r2 bucket create revise-imports` (**aucun domaine public**) — reporté en phase 3 : activer R2 dans le dashboard (moyen de paiement demandé, palier gratuit), puis remettre la liaison `IMPORTS` dans `wrangler.toml`
 
 ### 1.3 `wrangler.toml`
 
-- [ ] Liaison D1 (`revise`) et liaison R2 (`revise-imports`)
-- [ ] Static assets → `web/dist`
-- [ ] Route personnalisée `revise.tondomaine.fr`
-- [ ] `workers_dev = false`
-- [ ] `preview_urls = false`
-- [ ] Variables : `CLAUDE_MODEL` (défaut `claude-sonnet-5-5`), `TEAM_DOMAIN`, `POLICY_AUD`, `OWNER_EMAIL`
+- [x] Liaison D1 (`revise`) ; liaison R2 en phase 3
+- [x] Static assets → `web/dist`
+- [x] Route personnalisée `revise.reesch.com` (custom domain)
+- [x] `workers_dev = false`
+- [x] `preview_urls = false`
+- [x] Variables : `CLAUDE_MODEL` (défaut `claude-sonnet-5-5`), `TEAM_DOMAIN`, `POLICY_AUD`, `OWNER_EMAIL`
 
 ### 1.4 Cloudflare Access (Zero Trust)
 
-- [ ] Créer une application **self-hosted** sur `revise.tondomaine.fr`
-- [ ] Une seule règle **Allow** : ton adresse e-mail
-- [ ] Méthode de connexion : code à usage unique par e-mail (ou Google/GitHub)
-- [ ] Copier le **tag AUD** de l'application dans `POLICY_AUD`
+- [x] Créer une application **self-hosted** sur `revise.reesch.com`
+- [x] Une seule règle **Allow** : ton adresse e-mail
+- [x] Méthode de connexion : code à usage unique par e-mail (ou Google/GitHub)
+- [x] Copier le **tag AUD** de l'application dans `POLICY_AUD`
 
 ### 1.5 Middleware JWT (`worker/src/auth.ts`)
 
 Sur chaque route `/api/*` :
-- [ ] Lire l'en-tête `Cf-Access-Jwt-Assertion` (pas le cookie `CF_Authorization`)
-- [ ] Vérifier la signature RS256 avec les clés de `https://<équipe>.cloudflareaccess.com/cdn-cgi/access/certs` (`jose`, `createRemoteJWKSet`)
-- [ ] Vérifier `aud = POLICY_AUD` et `iss = TEAM_DOMAIN`
-- [ ] Vérifier `email = OWNER_EMAIL`, sinon **403**
+- [x] Lire l'en-tête `Cf-Access-Jwt-Assertion` (pas le cookie `CF_Authorization`)
+- [x] Vérifier la signature RS256 avec les clés de `https://<équipe>.cloudflareaccess.com/cdn-cgi/access/certs` (`jose`, `createRemoteJWKSet`)
+- [x] Vérifier `aud = POLICY_AUD` et `iss = TEAM_DOMAIN`
+- [x] Vérifier `email = OWNER_EMAIL`, sinon **403**
 
 ### 1.6 Base de données D1
 
-- [ ] Écrire la migration initiale dans `worker/migrations/` avec les 7 tables :
+- [x] Écrire la migration initiale dans `worker/migrations/` avec les 7 tables :
   `subjects`, `sources`, `cards`, `card_state` (+ index `idx_card_state_due`), `reviews`, `sessions`, `parked_thoughts`
   (schéma complet dans le plan de conception — dates en ISO 8601 texte, ids en UUID)
-- [ ] `wrangler d1 migrations apply revise --local` puis `--remote`
+- [x] `wrangler d1 migrations apply revise --local` puis `--remote`
 
 ### 1.7 Premier déploiement
 
-- [ ] Worker « hello » + page statique minimale
-- [ ] `wrangler deploy`
+- [x] Worker « hello » + page statique minimale
+- [x] `wrangler deploy`
 - [ ] Test en navigation privée : l'écran de connexion Access apparaît
-- [ ] Test `curl https://revise.tondomaine.fr/api/subjects` → refusé
-- [ ] Vérifier que l'URL `*.workers.dev` ne répond pas
+- [x] Test `curl https://revise.reesch.com/api/subjects` → refusé (302 vers la connexion Access)
+- [x] Vérifier que l'URL `*.workers.dev` ne répond pas
 
 ---
 
@@ -231,7 +231,7 @@ Vérification du rendu :
 
 - [ ] Access actif, une seule règle Allow (ton e-mail)
 - [ ] JWT revérifié dans le Worker sur toutes les routes `/api/*`
-- [ ] `workers_dev = false` et `preview_urls = false`
+- [x] `workers_dev = false` et `preview_urls = false`
 - [ ] Bucket R2 privé
 - [ ] `ANTHROPIC_API_KEY` en secret, limite de dépense définie dans la console Claude
 - [ ] Garde-fous import : 20 Mo, octets magiques, quota journalier
