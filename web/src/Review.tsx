@@ -31,9 +31,9 @@ export default function Review(p: { id: string }) {
   const commit = async () => {
     const t = pending();
     setPending(null);
-    if (t?.act === "delete") void api("DELETE", `/cards/${t.card.id}`).catch(() => {});
+    if (t?.act === "delete") void api("DELETE", `/cards/${t.card.id}`, undefined, true).catch(() => {});
     if (t?.act === "accept")
-      await api("PATCH", `/cards/${t.card.id}`, { status: "active" }).catch(() => {
+      await api("PATCH", `/cards/${t.card.id}`, { status: "active" }, true).catch(() => {
         setAccepted(accepted() - 1);
         setLost(true);
       });
@@ -43,6 +43,11 @@ export default function Review(p: { id: string }) {
   onCleanup(() => removeEventListener("pagehide", commit));
 
   const next = () => setI(i() + 1);
+  const relues = () => `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"}`;
+  const summary = () =>
+    accepted()
+      ? `${relues()} : ${part(accepted(), "acceptée")}${deleted() ? `, ${part(deleted(), "supprimée")}` : ""}.`
+      : `${relues()}, aucune acceptée.`;
   function act(a: "accept" | "delete") {
     void commit();
     setLost(false);
@@ -66,7 +71,8 @@ export default function Review(p: { id: string }) {
       if (queue.state !== "ready") return;
       shownAt = performance.now();
       queueMicrotask(() => (done() ? endBtn : acceptBtn)?.focus({ preventScroll: true }));
-      if (card()) announce(`Carte ${i() + 1} sur ${cards().length}.`);
+      // Le focus saute au bouton de fin : le bilan doit être lu, pas seulement affiché
+      announce(card() ? `Carte ${i() + 1} sur ${cards().length}.` : done() ? summary() : "");
       scrollTo(0, 0);
     }),
   );
@@ -126,11 +132,7 @@ export default function Review(p: { id: string }) {
       <Switch>
         <Match when={done()}>
           <main class="col end">
-            <h1 class="lead-title">
-              {accepted()
-                ? `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"} : ${part(accepted(), "acceptée")}${deleted() ? `, ${part(deleted(), "supprimée")}` : ""}.`
-                : `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"}, aucune acceptée.`}
-            </h1>
+            <h1 class="lead-title">{summary()}</h1>
             <Status />
             <div class="stack">
               <Show

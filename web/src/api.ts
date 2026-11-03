@@ -30,7 +30,8 @@ export class Failed extends Error {
 /** Accès Cloudflare expiré : Access répond par une redirection vers sa page de connexion. */
 export const [expired, setExpired] = createSignal(false);
 
-export async function api<T = void>(method: string, path: string, body?: unknown): Promise<T> {
+// `keepalive` : la requête survit à la fermeture de l'onglet (corps limité à 64 Ko)
+export async function api<T = void>(method: string, path: string, body?: unknown, keepalive?: boolean): Promise<T> {
   let res: Response;
   try {
     res = await fetch("/api" + path, {
@@ -38,6 +39,7 @@ export async function api<T = void>(method: string, path: string, body?: unknown
       headers: body === undefined ? undefined : { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       redirect: "manual",
+      keepalive,
     });
   } catch {
     throw new Offline();
