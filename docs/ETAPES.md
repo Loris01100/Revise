@@ -91,10 +91,10 @@ Sur chaque route `/api/*` :
 
 ### 2.1 Cœur Rust (`core/`)
 
-- [ ] `src/fsrs.rs` : fonction pure `schedule(state, grade, now) -> state`
-  - [x] Crate : **`rs-fsrs` 1.2** — compile en `wasm32-unknown-unknown` (`fsrs` 6.6 échoue : `getrandom` sans `wasm_js`, et embarque `burn`). Attention : ne pas utiliser `Card::new()` (appelle `Utc::now()`, panique en WASM) ; construire la carte avec `now` passé en paramètre
-  - [ ] Rétention cible : 90 %
-  - [ ] Notes : 1 « à revoir », 2 « difficile », 3 « bien », 4 « facile »
+- [x] `src/fsrs.rs` : fonction pure `schedule(state, grade, now) -> state`
+  - [x] Crate : **`rs-fsrs` 1.2** — compile en `wasm32-unknown-unknown` (`fsrs` 6.6 échoue : `getrandom` sans `wasm_js`, et embarque `burn`). `Card::new()` et `Parameters::default()` lisent l'horloge (`Utc::now()`, qui passe par `Date.now()` grâce à la feature `wasmbind` de chrono) ; `schedule` construit la carte elle-même pour rester pure en `now`
+  - [x] Rétention cible : 90 %
+  - [x] Notes : 1 « à revoir », 2 « difficile », 3 « bien », 4 « facile »
 - [ ] `src/session.rs` : composition d'une session
   - [ ] Tri des cartes dues par date
   - [ ] Limite de cartes nouvelles (défaut 10/jour)

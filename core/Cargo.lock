@@ -173,6 +173,7 @@ dependencies = [
 name = "revise-core"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "rs-fsrs",
  "wasm-bindgen",
 ]
