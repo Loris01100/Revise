@@ -146,6 +146,7 @@ Sur chaque route `/api/*` :
 - [x] **Session focus** : une carte plein écran, champ de réponse, barre « 4 / 12 », rien d'autre
 - [x] **Pause** : minuteur, suggestion de bouger/boire, « Reprendre » / « Arrêter là »
 - [x] **Fin de session** : bilan (cartes, temps) + pensées de la session, les plus anciennes repliées
+  - [x] « Refaire ces cartes » : mêmes cartes en entraînement, aucune note envoyée (le planning FSRS ne bouge pas)
 - [x] **Réglages** : révélation automatique de la correction (interrupteur + délai 15–180 s)
 
 Règles du mode focus :

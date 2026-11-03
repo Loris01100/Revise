@@ -19,7 +19,7 @@ const clock = (ms: number) => {
 type Review = { id: string; at: string; grade: number; ms: number };
 
 export default function Session(p: { run: Run }) {
-  const { id: sid, cards } = p.run;
+  const { id: sid, cards, replay } = p.run;
   const timed = p.run.mode.mode === "timed" ? p.run.mode.planned_min : 0;
   const [subjects] = createResource(() => api<Subject[]>("GET", "/subjects").catch(() => []));
   const subject = (id: string) => subjects.latest?.find((s) => s.id === id);
@@ -96,14 +96,16 @@ export default function Session(p: { run: Run }) {
       ? { ...prev, grade: g }
       : { id: crypto.randomUUID(), at: new Date().toISOString(), grade: g, ms: Date.now() - st[k].shown };
     // Une nouvelle note rend la précédente définitive ; corriger remplace la note gardée
-    if (!prev) void release();
-    enqueue({
-      id: r.id,
-      method: "POST",
-      path: `/sessions/${sid}/reviews`,
-      hold: true,
-      body: { id: r.id, card_id: cards[k].id, grade: g, duration_ms: r.ms, reviewed_at: r.at },
-    });
+    if (!replay) {
+      if (!prev) void release();
+      enqueue({
+        id: r.id,
+        method: "POST",
+        path: `/sessions/${sid}/reviews`,
+        hold: true,
+        body: { id: r.id, card_id: cards[k].id, grade: g, duration_ms: r.ms, reviewed_at: r.at },
+      });
+    }
     setSt(k, "review", r);
     setGradedAt(Date.now());
     if (k + 1 >= cards.length) return void end();
@@ -174,6 +176,7 @@ export default function Session(p: { run: Run }) {
     if (view() === "pause") pausedMs += Date.now() - pauseAt;
     setResult({ done: st.filter((x) => x.review).length, ms: Date.now() - t0 - pausedMs });
     setView("end");
+    if (replay) return;
     await release();
     try {
       setParked((await api<{ parked: Parked[] }>("POST", `/sessions/${sid}/end`)).parked);
@@ -200,6 +203,10 @@ export default function Session(p: { run: Run }) {
     } catch {
       setMore("failed");
     }
+  }
+  // Mêmes cartes, même ordre, sans toucher au planning
+  function redo() {
+    setRun({ ...p.run, cards: cards.filter((_, k) => st[k].review), replay: true });
   }
   function finish() {
     setRun(null);
@@ -255,6 +262,9 @@ export default function Session(p: { run: Run }) {
                 Carte {i() + 1} sur {cards.length}
               </span>
             </span>
+            <Show when={replay}>
+              <span class="pending">Entraînement</span>
+            </Show>
             <Show when={view() === "card" && subjectOf()}>
               {(s) => (
                 <span class="subject" style={hl(s().color)}>
@@ -510,6 +520,9 @@ export default function Session(p: { run: Run }) {
 
         <Match when={view() === "end"}>
           <main class="col end">
+            <Show when={replay}>
+              <p class="muted small">Entraînement : ces notes ne changent pas le planning.</p>
+            </Show>
             <h1 class="lead-title">
               {result().done
                 ? `${result().done} ${one(result().done) ? "carte revue" : "cartes revues"} ${duration(result().ms)}.`
@@ -543,6 +556,11 @@ export default function Session(p: { run: Run }) {
               <button ref={focusFree} class="btn primary lg block" onClick={finish}>
                 Terminer
               </button>
+              <Show when={result().done}>
+                <button class="btn block" onClick={redo}>
+                  Refaire ces cartes
+                </button>
+              </Show>
               <button class="btn block" onClick={again} disabled={more() === "busy"}>
                 {more() === "busy" ? "Préparation…" : "5 cartes de plus"}
               </button>

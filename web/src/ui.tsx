@@ -71,7 +71,8 @@ createRoot(() =>
 // --- Session en cours ---
 
 export type Mode = { mode: "quick5" } | { mode: "timed"; planned_min: number } | { mode: "subject"; subject_id: string };
-export type Run = { id: string; cards: Card[]; mode: Mode };
+/** `replay` : entraînement sur des cartes déjà notées, aucune note envoyée (FSRS reste juste). */
+export type Run = { id: string; cards: Card[]; mode: Mode; replay?: boolean };
 export const [run, setRun] = createSignal<Run | null>(null);
 
 /** Ouvre une session ; `false` quand il n'y a rien à réviser. */
