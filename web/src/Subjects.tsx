@@ -27,10 +27,18 @@ export default function Subjects(p: { id?: string }) {
   createEffect(() => setRows(reconcile(cards.latest ?? [], { key: "id" })));
 
   const [q, setQ] = createSignal("");
+  const [type, setType] = createSignal("");
+  const [state, setState] = createSignal("");
+  const clear = () => (setQ(""), setType(""), setState(""));
   // ponytail: tout le tableau est rendu d'un coup ; paginer par 50 si 500 cartes rament
   const shown = () => {
     const t = norm(q().trim());
-    return rows.filter((c) => !t || norm(plain(`${c.question} ${c.answer}`)).includes(t));
+    return rows.filter(
+      (c) =>
+        (!t || norm(plain(`${c.question} ${c.answer}`)).includes(t)) &&
+        (!type() || c.type === type()) &&
+        (!state() || (c.status ?? "active") === state()),
+    );
   };
 
   const [creating, setCreating] = createSignal(new URLSearchParams(location.search).has("nouvelle"));
@@ -184,24 +192,34 @@ export default function Subjects(p: { id?: string }) {
                     </Show>
                   }
                 >
-                  <label class="search">
-                    <Icon name="search" />
-                    <span class="sr-only">Chercher une carte</span>
-                    <input
-                      type="search"
-                      class="field"
-                      placeholder="Chercher une carte"
-                      value={q()}
-                      onInput={(e) => setQ(e.currentTarget.value)}
-                    />
-                  </label>
+                  <div class="filters">
+                    <label class="search">
+                      <Icon name="search" />
+                      <span class="sr-only">Chercher une carte</span>
+                      <input
+                        type="search"
+                        class="field"
+                        placeholder="Chercher une carte"
+                        value={q()}
+                        onInput={(e) => setQ(e.currentTarget.value)}
+                      />
+                    </label>
+                    <select class="field" aria-label="Type" value={type()} onChange={(e) => setType(e.currentTarget.value)}>
+                      <option value="">Tous les types</option>
+                      <For each={Object.entries(TYPES)}>{([k, v]) => <option value={k}>{v}</option>}</For>
+                    </select>
+                    <select class="field" aria-label="État" value={state()} onChange={(e) => setState(e.currentTarget.value)}>
+                      <option value="">Tous les états</option>
+                      <For each={Object.entries(STATUS)}>{([k, v]) => <option value={k}>{v}</option>}</For>
+                    </select>
+                  </div>
                   <Show
                     when={shown().length}
                     fallback={
                       <p class="empty">
-                        Aucune carte ne contient « {q().trim()} ».{" "}
-                        <button class="link" onClick={() => setQ("")}>
-                          Effacer la recherche
+                        {type() || state() ? "Aucune carte ne correspond à ces filtres." : `Aucune carte ne contient « ${q().trim()} ».`}{" "}
+                        <button class="link" onClick={clear}>
+                          {type() || state() ? "Effacer les filtres" : "Effacer la recherche"}
                         </button>
                       </p>
                     }
