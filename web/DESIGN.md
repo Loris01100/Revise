@@ -4,7 +4,7 @@ description: Surligneur sur polycopié — une feuille, une question, un geste.
 colors:
   paper: "light-dark(#ededea, #1c1c1b)"
   sheet: "light-dark(#fafaf7, #252524)"
-  ink: "light-dark(#1c1c1b, #ececE7)"
+  ink: "light-dark(#1c1c1b, #ecece7)"
   ink-2: "light-dark(#4d4d4a, #b0b0aa)"
   line: "light-dark(#7e7e7a, #85857f)"
   rule: "light-dark(rgb(28 28 27 / 0.14), rgb(236 236 231 / 0.14))"

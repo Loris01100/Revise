@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T00:00:00Z",
+  "generatedAt": "2026-11-03T15:00:00Z",
   "title": "Design System: Revise",
   "extensions": {
     "colorMeta": {
       "paper": { "role": "neutral", "displayName": "Gris de photocopie", "canonical": "light-dark(#ededea, #1c1c1b)", "tonalRamp": ["oklch(15% 0.003 105)", "oklch(25% 0.003 105)", "oklch(37% 0.003 105)", "oklch(50% 0.003 105)", "oklch(63% 0.003 105)", "oklch(76% 0.003 105)", "oklch(88% 0.003 105)", "oklch(95% 0.003 105)"] },
       "sheet": { "role": "neutral", "displayName": "Feuille", "canonical": "light-dark(#fafaf7, #252524)", "tonalRamp": ["oklch(15% 0.003 105)", "oklch(25% 0.003 105)", "oklch(37% 0.003 105)", "oklch(50% 0.003 105)", "oklch(63% 0.003 105)", "oklch(76% 0.003 105)", "oklch(88% 0.003 105)", "oklch(98% 0.004 105)"] },
-      "ink": { "role": "primary", "displayName": "Encre de toner", "canonical": "light-dark(#1c1c1b, #ececE7)", "tonalRamp": ["oklch(15% 0.002 105)", "oklch(22% 0.002 105)", "oklch(33% 0.002 105)", "oklch(45% 0.002 105)", "oklch(58% 0.002 105)", "oklch(71% 0.002 105)", "oklch(84% 0.003 105)", "oklch(94% 0.004 105)"] },
+      "ink": { "role": "primary", "displayName": "Encre de toner", "canonical": "light-dark(#1c1c1b, #ecece7)", "tonalRamp": ["oklch(15% 0.002 105)", "oklch(22% 0.002 105)", "oklch(33% 0.002 105)", "oklch(45% 0.002 105)", "oklch(58% 0.002 105)", "oklch(71% 0.002 105)", "oklch(84% 0.003 105)", "oklch(94% 0.004 105)"] },
       "ink-2": { "role": "neutral", "displayName": "Encre atténuée", "canonical": "light-dark(#4d4d4a, #b0b0aa)", "tonalRamp": ["oklch(15% 0.004 105)", "oklch(25% 0.004 105)", "oklch(35% 0.005 105)", "oklch(43% 0.005 105)", "oklch(55% 0.005 105)", "oklch(68% 0.006 105)", "oklch(76% 0.006 105)", "oklch(90% 0.004 105)"] },
       "line": { "role": "neutral", "displayName": "Filet", "canonical": "light-dark(#7e7e7a, #85857f)", "tonalRamp": ["oklch(15% 0.005 105)", "oklch(27% 0.005 105)", "oklch(39% 0.005 105)", "oklch(50% 0.005 105)", "oklch(60% 0.006 105)", "oklch(72% 0.005 105)", "oklch(84% 0.004 105)", "oklch(94% 0.003 105)"] },
       "rule": { "role": "neutral", "displayName": "Trait de séparation", "canonical": "light-dark(rgb(28 28 27 / 0.14), rgb(236 236 231 / 0.14))" },
@@ -23,7 +23,7 @@
       "display": { "displayName": "Minuteur", "purpose": "Le minuteur de la pause, seul ; chiffres tabulaires." },
       "headline": { "displayName": "Question", "purpose": "La question de la session ; réduite à clamp(22px, 0.8vw + 17px, 27px) une fois la réponse révélée." },
       "title": { "displayName": "Titre d'état", "purpose": "Titre d'état de l'accueil et du bilan, nom de matière en tête du détail." },
-      "title-sm": { "displayName": "Titre de barre", "purpose": "Mot-symbole Revise, titre de barre, titres de section du bilan." },
+      "title-sm": { "displayName": "Titre de barre", "purpose": "Mot-symbole Revise, titre de barre, titres de section du bilan, titre « Pause »." },
       "body-lg": { "displayName": "Corps de session", "purpose": "Choix de QCM, champ de réponse." },
       "body": { "displayName": "Corps", "purpose": "Texte courant ; explications limitées à 68ch." },
       "label": { "displayName": "Libellé", "purpose": "Libellés de champ, titres de section, position « 3 / 5 »." },
@@ -43,6 +43,7 @@
     "breakpoints": [
       { "name": "phone", "value": "600px" },
       { "name": "split", "value": "800px" },
+      { "name": "detail", "value": "@container detail (max-width: 640px)" },
       { "name": "dock-sticky", "value": "min-height: 480px" },
       { "name": "touch", "value": "pointer: coarse" }
     ],
@@ -138,7 +139,7 @@
       { "name": "The One Subject, One Colour Rule", "body": "Le fluo marque deux choses seulement : le nom d'une matière, dans sa couleur, et le terme clé révélé de la correction, dans la couleur de la matière de la carte. Une liste de matières montre donc une couleur par ligne ; un écran de session n'en montre qu'une.", "section": "colors" },
       { "name": "The Ink-Only Controls Rule", "body": "Boutons, navigation, progression, interrupteurs et pastilles restent en encre, feuille et filet. L'état actif s'exprime par l'aplat d'encre, pas par une couleur.", "section": "colors" },
       { "name": "The Two Weights Rule", "body": "400 et 700, rien d'autre. Un écart de rang se dit par la taille ou la graisse, pas par l'italique, l'espacement des lettres ou les capitales.", "section": "typography" },
-      { "name": "The Shortcut-After Rule", "body": "Le raccourci clavier suit le libellé (« Pause · Échap »), en encre atténuée et 400 ; il disparaît sur écran tactile.", "section": "typography" },
+      { "name": "The Shortcut-After Rule", "body": "Le raccourci clavier suit le libellé (« Pause · Échap »), en encre atténuée et 400 ; il disparaît sur écran tactile. Il est caché du nom lu (`aria-hidden`) et déclaré par `aria-keyshortcuts`.", "section": "typography" },
       { "name": "The No-Shadow Rule", "body": "Aucune `box-shadow` d'élévation. La seule ombre du code est un filet intérieur de 1 px qui épaissit la bordure d'un champ invalide.", "section": "elevation" }
     ],
     "dos": [
