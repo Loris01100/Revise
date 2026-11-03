@@ -10,7 +10,7 @@ const RULES: Record<CardType, string> = {
 
 /** Prompt à donner à Claude avec le cours en pièce jointe. */
 export function buildPrompt(count: number, types: CardType[]): string {
-  return `Tu prépares des cartes de révision (répétition espacée) à partir du cours joint.
+  return `Tu prépares des cartes de révision (répétition espacée) à partir du cours joint (document, ou photos de tableau, de notes manuscrites ou de pages).
 
 Règles :
 - Environ ${count} cartes. Couvre toutes les notions clés du cours, dans l'ordre du cours, plutôt que de détailler une seule partie.
@@ -20,6 +20,7 @@ Règles :
 - Écris en français, même si le cours est dans une autre langue. Garde tels quels les termes techniques et les sigles du cours.
 - Pas de question sur la mise en page, les consignes d'examen ou la numérotation du document.
 - Si le document est un sujet d'exercice, de TP ou d'examen, interroge sur les notions qu'il mobilise (outils, principes, méthodes, définitions), pas sur les détails du scénario (chiffres, noms, données propres à l'énoncé) ni sur ce qu'il « faut rendre ».
+- Si le cours est une photo : un mot ou un passage illisible ne se devine pas, laisse la notion de côté. Ignore ce qui n'est pas du cours (ratures, gribouillis, décor).
 
 Types de cartes à utiliser, en les mélangeant :
 ${types.map((t) => RULES[t]).join("\n")}
@@ -43,5 +44,5 @@ Format de sortie : uniquement un bloc de code JSON, sans texte avant ni après. 
 - Si le cours enseigne à produire du code ou des schémas (programmation, commandes, configuration, modélisation UML, réseaux…), 2 à 4 cartes "explain" demandent de le produire : « Écris la commande qui… », « Dessine le diagramme de séquence de… ». "answer" contient alors une phrase avec le terme clé entre ==, puis le bloc de code ou le bloc \`\`\`mermaid attendu, tiré du cours. Pour les autres cours, ne fais pas ce genre de carte.
 - Dans le JSON, échappe les retours à la ligne en \\n et les guillemets en \\".
 - "choices" vaut null sauf pour "mcq".
-- "source_page" est le numéro de la page du cours où se trouve la notion, ou null si le document n'a pas de pages.`;
+- "source_page" est le numéro de la page du cours où se trouve la notion, ou null si le document n'a pas de pages (une photo n'en a pas, sauf numéro visible).`;
 }

@@ -11,7 +11,7 @@ Contexte produit : [PRODUCT.md](../PRODUCT.md). Tout travail d'UX/UI passe par l
 - [x] Framework frontend : **SolidJS**
 - [x] Nom : **Revise** (remplace « Ancre »)
 - [x] `/impeccable init` → [PRODUCT.md](../PRODUCT.md)
-- [ ] Génération de cartes depuis des images (photos de tableau, notes manuscrites) : oui / non / plus tard
+- [x] Génération de cartes depuis des images : **oui, par le prompt** — photo jointe dans Claude comme un PDF ; illisible = notion ignorée, `source_page` null
 - [x] Sous-domaine : `revise.reesch.com`
 - [x] Installer les outils : Node.js, `wrangler`, Rust + cible `wasm32-unknown-unknown`, `wasm-pack`
 - [x] `wrangler login` sur le compte Cloudflare qui possède le domaine
