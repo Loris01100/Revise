@@ -131,14 +131,21 @@ export default function Session(p: { run: Run }) {
     setView("card");
     queueMicrotask(() => (back?.isConnected ? back.focus() : focusCard()));
   }
-  const pauseLeft = () => Math.max(0, PAUSE_MS - (now() - pauseAt));
+  const pauseLeft = () => Math.min(PAUSE_MS, Math.max(0, PAUSE_MS - (now() - pauseAt)));
   createEffect(on(() => view() === "pause" && pauseLeft() === 0, (over) => over && announce("Pause terminée.")));
 
+  // Confirmation visible 3 s dans la barre, sans toast par-dessus la carte
+  const [kept, setKept] = createSignal(false);
+  let keptTimer = 0;
   function keep(text: string) {
     if (!text.trim()) return;
     enqueue({ method: "POST", path: "/parked", body: { text: text.trim(), session_id: sid } });
     announce("Pensée gardée.");
+    setKept(true);
+    clearTimeout(keptTimer);
+    keptTimer = setTimeout(() => setKept(false), 3000);
   }
+  onCleanup(() => clearTimeout(keptTimer));
 
   function onKey(e: KeyboardEvent) {
     if (document.querySelector("dialog[open]") || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -173,9 +180,16 @@ export default function Session(p: { run: Run }) {
       enqueue({ method: "POST", path: `/sessions/${sid}/end`, body: {} });
     }
   }
-  function settle(t: Parked, done: boolean) {
+  function settle(t: Parked, done: boolean, el: HTMLElement) {
     if (done) enqueue({ method: "PATCH", path: `/parked/${t.id}`, body: { done: true } });
+    // La rangée disparaît : le focus passe à la pensée voisine, sinon à « Terminer »
+    const rows = [...document.querySelectorAll(".thoughts .row")];
+    const k = rows.indexOf(el.closest(".row")!);
+    const next =
+      [rows[k + 1], rows[k - 1]].map((r) => r?.querySelector("button")).find((b) => b?.checkVisibility()) ??
+      document.querySelector<HTMLElement>(".end .primary");
     setParked(parked().filter((x) => x !== t));
+    next?.focus();
   }
   const [more, setMore] = createSignal<"idle" | "busy" | "failed">("idle");
   async function again() {
@@ -193,10 +207,16 @@ export default function Session(p: { run: Run }) {
 
   const subjectOf = () => subject(card().subject_id);
   const ParkButton = (q: { shortcut?: boolean }) => (
-    <button type="button" class="btn small quiet park" onClick={() => setParking(true)}>
-      Noter une pensée
+    <button
+      type="button"
+      class="btn small quiet park"
+      aria-keyshortcuts={q.shortcut ? "P" : undefined}
+      onClick={() => setParking(true)}
+    >
+      {/* Confirmation à l'endroit du geste ; la barre la prend pendant la pause */}
+      {kept() ? "Pensée gardée" : "Noter une pensée"}
       <Show when={q.shortcut}>
-        <span class="key"> · P</span>
+        <span class="key" aria-hidden="true"> · P</span>
       </Show>
     </button>
   );
@@ -209,10 +229,10 @@ export default function Session(p: { run: Run }) {
         {(t) => (
           <li class="row">
             <span class="name">{t.text}</span>
-            <button class="btn small" onClick={() => settle(t, true)}>
+            <button class="btn small" onClick={(e) => settle(t, true, e.currentTarget)}>
               Fait
             </button>
-            <button class="btn small quiet" onClick={() => settle(t, false)}>
+            <button class="btn small quiet" onClick={(e) => settle(t, false, e.currentTarget)}>
               Plus tard
             </button>
           </li>
@@ -226,13 +246,13 @@ export default function Session(p: { run: Run }) {
       <Show when={view() !== "end"}>
         <header class="bar">
           <div class="bar-start">
-            <Show when={canCorrect()}>
-              <button class="btn small" onClick={() => setI(i() - 1)}>
-                Corriger la note précédente
-              </button>
-            </Show>
-            <span class="pos" aria-label={`Carte ${i() + 1} sur ${cards.length}`}>
-              {i() + 1} / {cards.length}
+            <span class="pos">
+              <span aria-hidden="true">
+                {i() + 1} / {cards.length}
+              </span>
+              <span class="sr-only">
+                Carte {i() + 1} sur {cards.length}
+              </span>
             </span>
             <Show when={view() === "card" && subjectOf()}>
               {(s) => (
@@ -240,6 +260,15 @@ export default function Session(p: { run: Run }) {
                   <mark>{s().name}</mark>
                 </span>
               )}
+            </Show>
+            {/* Après la position : son apparition ne décale pas « 3 / 5 » */}
+            <Show when={canCorrect()}>
+              <button class="btn small" aria-label="Corriger la note précédente" onClick={() => setI(i() - 1)}>
+                Corriger<span class="wide"> la note précédente</span>
+              </button>
+            </Show>
+            <Show when={kept() && view() === "pause"}>
+              <span class="pending">Pensée gardée</span>
             </Show>
             <Show when={stalled()}>
               <span class="pending">
@@ -249,8 +278,8 @@ export default function Session(p: { run: Run }) {
             </Show>
           </div>
           <Show when={view() === "card"}>
-            <button class="btn small" onClick={openPause}>
-              Pause<span class="key"> · Échap</span>
+            <button class="btn small" aria-keyshortcuts="Escape" onClick={openPause}>
+              Pause<span class="key" aria-hidden="true"> · Échap</span>
             </button>
           </Show>
         </header>
@@ -326,8 +355,16 @@ export default function Session(p: { run: Run }) {
                   <div class="choices" role="group" aria-labelledby="q" onKeyDown={(e) => arrows(e, "y")}>
                     <For each={card().choices}>
                       {(c, k) => (
-                        <button class="btn choice" data-roving tabIndex={k() ? -1 : 0} onClick={() => pick(k())}>
-                          <span class="key">{k() + 1} · </span>
+                        <button
+                          class="btn choice"
+                          data-roving
+                          tabIndex={k() ? -1 : 0}
+                          aria-keyshortcuts={String(k() + 1)}
+                          onClick={() => pick(k())}
+                        >
+                          <span class="key" aria-hidden="true">
+                            {k() + 1} ·{" "}
+                          </span>
                           {c}
                         </button>
                       )}
@@ -394,16 +431,24 @@ export default function Session(p: { run: Run }) {
                         data-roving
                         tabIndex={n === 1 ? 0 : -1}
                         aria-describedby={`g${n}`}
+                        aria-keyshortcuts={String(n)}
                         onClick={() => grade(n)}
                         onFocus={() => setHelp(text)}
                         onMouseEnter={() => setHelp(text)}
                       >
-                        <span class="key">{n} · </span>
-                        {label}
-                        <span id={`g${n}`} class="sr-only">
-                          {text}
+                        <span class="key" aria-hidden="true">
+                          {n} ·{" "}
                         </span>
+                        {label}
                       </button>
+                    )}
+                  </For>
+                  {/* Descriptions hors des boutons : lues après le nom, pas dedans */}
+                  <For each={GRADES}>
+                    {([n, , text]) => (
+                      <span id={`g${n}`} hidden>
+                        {text}
+                      </span>
                     )}
                   </For>
                 </div>
@@ -426,7 +471,7 @@ export default function Session(p: { run: Run }) {
               <p class="muted">Lève-toi, bois un verre d'eau.</p>
               <div class="stack">
                 <button ref={(el) => queueMicrotask(() => el.focus())} class="btn primary lg block" onClick={resume}>
-                  Reprendre<span class="key"> · Entrée</span>
+                  Reprendre<span class="key" aria-hidden="true"> · Entrée</span>
                 </button>
                 <button class="btn block" onClick={end}>
                   Arrêter là
@@ -519,10 +564,10 @@ export default function Session(p: { run: Run }) {
             </p>
             <div class="actions">
               <button type="button" class="btn" onClick={() => setParking(false)}>
-                Annuler<span class="key"> · Échap</span>
+                Annuler<span class="key" aria-hidden="true"> · Échap</span>
               </button>
               <button class="btn primary">
-                Garder<span class="key"> · Entrée</span>
+                Garder<span class="key" aria-hidden="true"> · Entrée</span>
               </button>
             </div>
           </form>

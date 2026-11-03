@@ -159,10 +159,10 @@ Règles du mode focus :
 - [x] Utilisable au clavier (desktop) et au doigt (mobile)
 
 Vérification du rendu :
-- [ ] `/impeccable critique` et `/impeccable audit` sur chaque écran
+- [x] `/impeccable critique` et `/impeccable audit` sur chaque écran
   - [x] Critique (28/40) et correctifs des 2 P1 et 3 P2 → [web/.impeccable/critique/](../web/.impeccable/critique/)
-  - [ ] Audit, et contrôle à l'écran (navigateur de test indisponible le 2026-11-03)
-- [ ] `/impeccable polish` avant de déployer
+  - [x] Audit (16/20 : 1 P1, 3 P2) et contrôle à l'écran par Chrome headless sur une API simulée, de 375 à 1280 px
+- [x] `/impeccable polish` avant de déployer : focus conservé après chaque action, tableau replié selon sa place, titre d'onglet par écran
 
 ### 2.5 Déploiement
 

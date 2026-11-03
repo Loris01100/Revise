@@ -14,6 +14,11 @@ function App() {
   // Une seule annonce à l'entrée et à la sortie de l'attente
   createEffect(on(stalled, (s, was) => (s ? announce("Enregistrement en attente.") : was && announce("Tout est enregistré.")), { defer: true }));
   const subject = () => path().match(/^\/matieres\/([^/]+)/)?.[1];
+  createEffect(() => {
+    const p = path();
+    const name = run() ? "Session" : p.startsWith("/matieres") ? "Matières" : p === "/reglages" ? "Réglages" : "";
+    document.title = name ? `${name} · Revise` : "Revise";
+  });
 
   return (
     <>

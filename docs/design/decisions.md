@@ -220,3 +220,13 @@
 - Decided by: Claude, par défaut
 - Why: une réponse longue s'écrit sur plusieurs lignes ; un texte à trous n'a qu'une réponse ; le focus arrive sur « 1 · À revoir » et `Espace` l'activait.
 - Rests on: /impeccable critique du 2026-11-03, P2.
+## 2026-11-03 · Tableau des cartes replié selon la largeur du détail, état affiché seulement hors « Active »
+- Decided by: Claude, par défaut
+- Why: à côté de la liste des matières, le tableau débordait entre 800 et 1000 px ; « Active » répété sur chaque ligne n'apprenait rien.
+- Rejected: relever le point de rupture de l'écran à 1000 px, qui aurait aussi empilé la liste des matières.
+- Rests on: /impeccable audit du 2026-11-03, P2 ; critique du même jour.
+
+## 2026-11-03 · « Pensée gardée » s'affiche à la place de « Noter une pensée » pendant 3 s
+- Decided by: Claude, par défaut
+- Why: la confirmation n'était que lue au lecteur d'écran ; la barre du haut n'a pas la place sur téléphone, le bouton du geste si. Pendant la pause, la barre la porte.
+- Rests on: /impeccable critique du 2026-11-03.

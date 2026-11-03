@@ -191,7 +191,7 @@ Une palette d'encre et de papier, presque achromatique, que seuls les cinq surli
 - **Display** (700, clamp 48–72 px, 1,1, chiffres tabulaires) : le minuteur de la pause, seul.
 - **Headline** (700, clamp 27–38 px, 1,26, −0,01em) : la question de la session ; passe à clamp 22–27 px une fois la réponse révélée.
 - **Title** (700, clamp 26–32 px, 1,2) : titre d'état de l'accueil et du bilan ; le nom de matière en tête du détail suit la même logique (clamp 26–34 px). Les titres de dialogue sont à 22 px / 1,3.
-- **Title-sm** (700, 19 px) : mot-symbole Revise, titre de barre, titres de section du bilan.
+- **Title-sm** (700, 19 px) : mot-symbole Revise, titre de barre, titres de section du bilan, titre « Pause ».
 - **Body-lg** (400, 19 px) : choix de QCM, champ de réponse ; la réponse correcte est à 21 px en 700.
 - **Body** (400, 17 px, 1,5) : texte courant ; explications limitées à 68ch.
 - **Label** (700, 15 px) : libellés de champ, titres de section des réglages et de liste (en encre atténuée), position « 3 / 5 » en chiffres tabulaires.
@@ -200,13 +200,13 @@ Une palette d'encre et de papier, presque achromatique, que seuls les cinq surli
 ### Named Rules
 **The Two Weights Rule.** 400 et 700, rien d'autre. Un écart de rang se dit par la taille ou la graisse, pas par l'italique, l'espacement des lettres ou les capitales.
 
-**The Shortcut-After Rule.** Le raccourci clavier suit le libellé (« Pause · Échap »), en encre atténuée et 400 ; il disparaît sur écran tactile.
+**The Shortcut-After Rule.** Le raccourci clavier suit le libellé (« Pause · Échap »), en encre atténuée et 400 ; il disparaît sur écran tactile. Il est caché du nom lu (`aria-hidden`) et déclaré par `aria-keyshortcuts`.
 
 ## Layout
 
 Une colonne centrée par tâche. L'accueil et les réglages tiennent dans 480 px, la session dans 760 px ; marge haute fluide (clamp 40–120 px pour l'accueil, 32–96 px pour la session). La gouttière latérale est `gutter` (clamp 16–48 px) partout : barres, alertes, colonnes.
 
-Les barres hautes font 64 px de haut, séparées du contenu par un trait `rule`. Matières est une vue liste / détail (colonne latérale de 240–340 px, trait vertical) ; sous 800 px elle devient une pile qui montre l'une ou l'autre, et le tableau des cartes se replie en blocs. Sous 600 px, les quatre boutons de note passent en grille 2 × 2 et le bouton « Voir la réponse » devient plein et pleine largeur. Le dock de notation colle au bas de l'écran seulement quand la hauteur dépasse 480 px.
+Les barres hautes font 64 px de haut, séparées du contenu par un trait `rule`. Matières est une vue liste / détail (colonne latérale de 240–340 px, trait vertical) ; sous 800 px elle devient une pile qui montre l'une ou l'autre. Le tableau des cartes se replie en blocs dès que le détail fait moins de 640 px de large (requête de conteneur `detail`), à côté de la liste comme seul. Sous 600 px, les quatre boutons de note passent en grille 2 × 2 et le bouton « Voir la réponse » devient plein et pleine largeur. Le dock de notation colle au bas de l'écran seulement quand la hauteur dépasse 480 px.
 
 Rythme d'espacement observé : 8, 12, 16, 20, 28, 40, 48, 64 px. Les lignes de liste font au moins 52 px, les réglages 72 px. Toute cible tactile fait au moins 44 px.
 
@@ -244,7 +244,7 @@ Sobres et nets, comme un tampon d'encre.
 - **Error:** bordure et filet intérieur en rouge de correction, message en 15 px / 700 dessous.
 
 ### Navigation
-Barre de 64 px : Revise à gauche en 19 px / 700, liens Matières · Réglages à droite en 700, lavis et coins de 4 px au survol. En session, la barre porte la position « 3 / 5 », le nom de matière surligné et « Pause · Échap », puis une barre de temps de 3 px en encre sur trait.
+Barre de 64 px : Revise à gauche en 19 px / 700, liens Matières · Réglages à droite en 700, lavis et coins de 4 px au survol. En session, la barre porte la position « 3 / 5 », le nom de matière surligné, puis « Corriger la note précédente » pendant 10 s (« Corriger » sur téléphone), et « Pause · Échap » à droite, puis une barre de temps de 3 px en encre sur trait.
 
 ### Lists (rows)
 Lignes de 52 px séparées par des traits `rule`, nom tronqué sur une ligne ; lavis au survol. Dans la colonne latérale, la ligne courante prend la feuille et le 700.

@@ -9,6 +9,13 @@ export function go(to: string) {
   if (to !== location.pathname) history.pushState(null, "", to);
   setPath(to);
   scrollTo(0, 0);
+  // Le lien cliqué a disparu avec l'ancien écran : le focus repart du contenu, pas du haut du document
+  queueMicrotask(() => {
+    const main = document.querySelector<HTMLElement>("main:not([hidden])");
+    if (!main || (document.activeElement !== document.body && document.activeElement?.checkVisibility())) return;
+    main.tabIndex = -1;
+    main.focus({ preventScroll: true });
+  });
 }
 export function Link(p: { href: string; class?: string; children: JSX.Element; "aria-current"?: "page" }) {
   return (

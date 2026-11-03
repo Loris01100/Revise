@@ -1,4 +1,5 @@
-import { For, Index, Show, createResource, createSignal } from "solid-js";
+import { For, Index, Show, createEffect, createResource, createSignal } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import { api, type Card, type CardType, type Color, type Subject } from "./api";
 import { COLORS, Confirm, Dialog, Icon, Link, TYPES, announce, arrows, go, hl, plain, start } from "./ui";
 
@@ -19,12 +20,15 @@ export default function Subjects(p: { id?: string }) {
     (id) => api<Card[]>("GET", `/subjects/${id}/cards`),
   );
   const reload = () => Promise.all([reloadCards(), reloadSubjects()]);
+  // Rangées réconciliées par id : un rechargement garde les mêmes nœuds, donc le focus
+  const [rows, setRows] = createStore<Card[]>([]);
+  createEffect(() => setRows(reconcile(cards.latest ?? [], { key: "id" })));
 
   const [q, setQ] = createSignal("");
   // ponytail: tout le tableau est rendu d'un coup ; paginer par 50 si 500 cartes rament
   const shown = () => {
     const t = norm(q().trim());
-    return (cards.latest ?? []).filter((c) => !t || norm(plain(`${c.question} ${c.answer}`)).includes(t));
+    return rows.filter((c) => !t || norm(plain(`${c.question} ${c.answer}`)).includes(t));
   };
 
   const [creating, setCreating] = createSignal(new URLSearchParams(location.search).has("nouvelle"));
@@ -40,7 +44,7 @@ export default function Subjects(p: { id?: string }) {
     } catch {
       setToast({ text: "Pas enregistré. Réessaie." });
     }
-    void reload();
+    await reload();
   };
   const status = (c: Card, s: "active" | "suspended") => api("PATCH", `/cards/${c.id}`, { status: s });
   const suspend = (c: Card) =>
@@ -197,27 +201,23 @@ export default function Subjects(p: { id?: string }) {
                             <tr classList={{ off: c.status !== "active" }}>
                               <td class="question">{plain(c.question)}</td>
                               <td>{TYPES[c.type]}</td>
-                              <td>{STATUS[c.status ?? "active"]}</td>
+                              {/* L'état ne se dit que quand il sort de l'ordinaire */}
+                              <td>{c.status && c.status !== "active" ? STATUS[c.status] : ""}</td>
                               <td class="acts">
                                 <div>
-                                <button class="link" onClick={() => (setToast(null), setEditing(c))}>
-                                  Modifier
-                                </button>
-                                <Show
-                                  when={c.status === "active"}
-                                  fallback={
-                                    <button class="link" onClick={() => act(() => status(c, "active"))}>
-                                      Réactiver
-                                    </button>
-                                  }
-                                >
-                                  <button class="link" onClick={() => suspend(c)}>
-                                    Suspendre
+                                  <button class="link" onClick={() => (setToast(null), setEditing(c))}>
+                                    Modifier
                                   </button>
-                                </Show>
-                                <button class="link" onClick={() => (setToast(null), setDeleting(c))}>
-                                  Supprimer
-                                </button>
+                                  {/* Un seul bouton dont le libellé change : le focus reste dessus */}
+                                  <button
+                                    class="link"
+                                    onClick={() => (c.status === "active" ? suspend(c) : act(() => status(c, "active")))}
+                                  >
+                                    {c.status === "active" ? "Suspendre" : "Réactiver"}
+                                  </button>
+                                  <button class="link" onClick={() => (setToast(null), setDeleting(c))}>
+                                    Supprimer
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -267,9 +267,13 @@ export default function Subjects(p: { id?: string }) {
             yes="Supprimer"
             no="Garder"
             onNo={() => setDeleting(null)}
-            onYes={() => {
+            onYes={async () => {
+              const k = shown().indexOf(c());
               setDeleting(null);
-              void act(() => api("DELETE", `/cards/${c().id}`));
+              await act(() => api("DELETE", `/cards/${c().id}`));
+              // Sa rangée a disparu : le focus passe à la carte qui prend sa place, sinon à « Ajouter une carte »
+              const trs = document.querySelectorAll(".cards tbody tr");
+              (trs[Math.min(k, trs.length - 1)]?.querySelector("button") ?? document.querySelector<HTMLElement>(".detail .btn"))?.focus();
             }}
           />
         )}

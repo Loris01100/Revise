@@ -86,6 +86,10 @@ p {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
+/* Zone de contenu focalisée au changement d'écran : point de départ, pas une cible */
+main[tabindex="-1"]:focus {
+  outline: none;
+}
 [hidden] {
   display: none !important;
 }
@@ -670,10 +674,16 @@ a.row:hover {
   gap: 16px;
   min-width: 0;
 }
+/* Pause garde sa ligne ; « Corriger » est le seul à pouvoir passer sur deux */
+.bar > .btn {
+  flex: none;
+  white-space: nowrap;
+}
 .pos {
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .pending {
   display: inline-flex;
@@ -681,6 +691,7 @@ a.row:hover {
   gap: 8px;
   font-size: 15px;
   color: var(--ink-2);
+  white-space: nowrap;
 }
 .timebar {
   height: 3px;
@@ -814,7 +825,7 @@ a.row:hover {
 }
 .grade {
   min-height: 56px;
-  font-size: 18px;
+  font-size: 19px;
   padding: 0 10px;
 }
 .dock-foot {
@@ -833,7 +844,7 @@ a.row:hover {
   text-align: center;
 }
 .pause h1 {
-  font-size: 24px;
+  font-size: 19px;
 }
 .timer {
   margin: 8px 0;
@@ -913,8 +924,8 @@ a.row:hover {
   font-weight: 700;
 }
 .detail {
+  container: detail / inline-size;
   padding: 32px var(--gutter) 64px;
-  outline: none;
 }
 .detail-head {
   display: flex;
@@ -958,7 +969,6 @@ p.empty {
 .cards {
   width: 100%;
   border-collapse: collapse;
-  font-size: 16px;
 }
 .cards th {
   padding: 10px 12px 10px 0;
@@ -1041,6 +1051,9 @@ p.empty {
   .split.picked .side {
     display: none;
   }
+}
+/* Le tableau se replie selon la place du détail, pas de l'écran : à côté de la liste, il déborde dès 1000 px */
+@container detail (max-width: 640px) {
   .cards thead {
     display: none;
   }
@@ -1064,7 +1077,7 @@ p.empty {
     font-size: 15px;
     color: var(--ink-2);
   }
-  .cards td:nth-child(2)::after {
+  .cards td:nth-child(3):not(:empty)::before {
     content: " · ";
   }
   .cards .acts > div {
@@ -1088,6 +1101,9 @@ p.empty {
     background: var(--ink);
     border-color: var(--ink);
     color: var(--on-ink);
+  }
+  .bar .wide {
+    display: none;
   }
   .bar .btn.small {
     min-height: 44px;
