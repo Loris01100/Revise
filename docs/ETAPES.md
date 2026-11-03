@@ -178,11 +178,13 @@ Vérification du rendu :
 
 ### 3.1 Prompt de génération (`web/src/prompt.ts`)
 
-- [ ] Prompt prêt à copier : une notion par carte, en français, rappel actif plutôt que reconnaissance, couvrir toutes les notions clés, citer la page source, ne rien inventer
-- [ ] Format de sortie imposé : un seul bloc JSON, tableau de cartes
-  - Champs : `type`, `question`, `answer`, `choices` (QCM), `explanation`, `source_page`, `difficulty`
-- [ ] Le nombre de cartes et les types choisis sont insérés dans le prompt
-- [ ] Essai à la main sur un vrai cours PDF et DOCX, puis ajustement du prompt
+- [x] Prompt prêt à copier : une notion par carte, en français, rappel actif plutôt que reconnaissance, couvrir toutes les notions clés, citer la page source, ne rien inventer
+- [x] Format de sortie imposé : un seul bloc JSON, tableau de cartes
+  - Champs : `type`, `question`, `answer`, `choices` (QCM), `explanation`, `source_page` — pas de `difficulty` : aucune colonne, FSRS la calcule
+- [x] Le nombre de cartes et les types choisis sont insérés dans le prompt
+- [x] Essai à la main sur un vrai cours PDF et DOCX, puis ajustement du prompt
+  - PDF (partiel d'architecture logicielle, 13 p.) : 21 cartes justes ; listes de 4 éléments au plus autorisées
+  - DOCX (sujet CI/CD .NET, claude.ai) : 22 cartes au bon format ; sur un sujet d'exercice, viser les notions plutôt que les détails de l'énoncé ; l'explication ne répète pas la réponse
 
 ### 3.2 Validation des cartes (`core/src/cards.rs`)
 
