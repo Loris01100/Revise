@@ -40,8 +40,10 @@ export default function Import(p: { id: string }) {
   const count = () => settings().importCount;
   const types = () => settings().importTypes;
   const [copied, setCopied] = createSignal(false);
-  // Le prompt est parti chez Claude : au retour sur l'onglet, la suite est l'étape 3
-  const [sent, setSent] = createSignal(false);
+  // Le prompt est parti chez Claude : au retour sur l'onglet, la suite est l'étape 3.
+  // Gardé pour l'onglet : le téléphone recharge souvent la page pendant le passage chez Claude
+  const SENT = `revise.sent.${p.id}`;
+  const [sent, setSent] = createSignal(!!sessionStorage.getItem(SENT));
   const [copyFailed, setCopyFailed] = createSignal(false);
   const [typeError, setTypeError] = createSignal(false);
   const [shown, setShown] = createSignal(false);
@@ -65,6 +67,7 @@ export default function Import(p: { id: string }) {
       setCopyFailed(false);
       setCopied(true);
       setSent(true);
+      sessionStorage.setItem(SENT, "1");
       announce("Prompt copié.");
       setTimeout(() => (setCopied(false), quiet("Prompt copié.")), 3000);
     } catch {
@@ -83,11 +86,12 @@ export default function Import(p: { id: string }) {
   let paste!: HTMLTextAreaElement;
   let primary: HTMLElement | undefined;
   let step3!: HTMLLIElement;
+  // Au doigt, le focus ouvrirait le clavier par-dessus ce qu'il faut lire : seulement à la souris
+  const fine = () => matchMedia("(pointer: fine)").matches;
   const back3 = () => {
     if (document.hidden || !sent() || report() || text()) return;
     step3.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    // Au doigt, le focus ouvrirait le clavier par-dessus l'étape : seulement au clavier
-    if (matchMedia("(pointer: fine)").matches) paste.focus({ preventScroll: true });
+    if (fine()) paste.focus({ preventScroll: true });
   };
   document.addEventListener("visibilitychange", back3);
   onCleanup(() => document.removeEventListener("visibilitychange", back3));
@@ -95,7 +99,7 @@ export default function Import(p: { id: string }) {
   // Sous un champ de 12 lignes, le message tombe hors de l'écran du téléphone
   const fail = (m: string) => {
     setError(m);
-    paste.focus();
+    if (fine()) paste.focus();
     document.getElementById("paste-err")?.scrollIntoView({ block: "center" });
   };
   async function submit() {
@@ -107,6 +111,7 @@ export default function Import(p: { id: string }) {
     try {
       const r = await api<Report>("POST", "/imports", { subject_id: p.id, text: text() });
       setReport(r);
+      sessionStorage.removeItem(SENT);
       announce(headline(r));
       queueMicrotask(() => primary?.focus());
     } catch (e) {
@@ -280,7 +285,7 @@ export default function Import(p: { id: string }) {
                   aria-invalid={!!error()}
                   aria-describedby="paste-err"
                 />
-                <p id="paste-err" class="error-text">
+                <p id="paste-err" class="error-text" role="alert">
                   {error()}
                 </p>
                 <button
