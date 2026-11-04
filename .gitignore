@@ -4,7 +4,10 @@
 .claude/settings.local.json
 skills-lock.json
 .impeccable/questions/
-.impeccable/hook.cache.json
+**/.impeccable/hook.*.json
+**/.impeccable/config.local.json
+.agents/
+.codex/
 
 # Build et dépendances
 node_modules/
@@ -13,3 +16,5 @@ target/
 core/pkg/
 .wrangler/
 .dev.vars
+.env
+*.log
