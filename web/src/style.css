@@ -1278,6 +1278,15 @@ p.empty {
   margin-top: 8px;
   max-width: 68ch;
 }
+.rejected > p.muted {
+  padding-block: 10px;
+}
+.rejected ul + .btn {
+  margin-top: 20px;
+}
+.rejected .hint:empty {
+  display: none;
+}
 .notice.drafts {
   display: flex;
   flex-wrap: wrap;
@@ -1296,6 +1305,23 @@ p.empty {
   min-width: 0;
   margin-left: -12px;
 }
+/* La carte remplit l'écran : le dock reste au même endroit d'une carte à l'autre, à portée du pouce */
+.review {
+  display: flex;
+  flex-direction: column;
+}
+.review main.card {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+.review main.card > :has(+ .grades-dock) {
+  margin-bottom: 40px;
+}
+.review .grades-dock {
+  margin-top: auto;
+}
 .review-acts {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
@@ -1311,6 +1337,7 @@ p.empty {
   color: var(--ink-2);
 }
 .review-status .link {
+  min-height: 24px;
   color: var(--ink);
 }
 .end .review-status {

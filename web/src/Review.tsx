@@ -8,19 +8,19 @@ const part = (n: number, word: string) => `${n} ${word}${one(n) ? "" : "s"}`;
 export default function Review(p: { id: string }) {
   const back = `/matieres/${p.id}`;
   const [subjects] = createResource(() => api<Subject[]>("GET", "/subjects"));
-  const subject = () => subjects()?.find((s) => s.id === p.id);
+  const subject = () => (subjects.error ? undefined : subjects()?.find((s) => s.id === p.id));
   // La liste est figée à l'ouverture : l'ordre du lot, celui du cours
-  const [queue] = createResource(async () => {
+  const [queue, { refetch }] = createResource(async () => {
     const all = await api<Card[]>("GET", `/subjects/${p.id}/cards`);
     return all.filter((c) => c.status === "draft");
   });
-  createEffect(() => queue()?.length === 0 && go(back));
+  createEffect(() => queue.state === "ready" && queue().length === 0 && go(back));
 
   const [i, setI] = createSignal(0);
   const [accepted, setAccepted] = createSignal(0);
   const [deleted, setDeleted] = createSignal(0);
   const [editing, setEditing] = createSignal(false);
-  const cards = () => queue() ?? [];
+  const cards = () => (queue.state === "ready" ? queue() : []);
   const card = () => cards()[i()];
   const done = () => queue.state === "ready" && cards().length > 0 && i() >= cards().length;
 
@@ -55,6 +55,7 @@ export default function Review(p: { id: string }) {
     a === "accept" ? setAccepted(accepted() + 1) : setDeleted(deleted() + 1);
     next();
   }
+  const edit = () => (void commit(), setLost(false), setEditing(true));
   function undo() {
     const a = pending()?.act;
     setPending(null);
@@ -83,6 +84,15 @@ export default function Review(p: { id: string }) {
       if (e.key === "Escape") go(back);
       // Entrée tenue ou frappée sur l'élan de la carte précédente : la nouvelle carte n'a pas encore été lue
       if (e.key === "Enter" && (e.repeat || performance.now() - shownAt < 400)) e.preventDefault();
+      // M et S : les deux autres gestes de la carte, sans passer par Tab
+      const t = e.target as HTMLElement;
+      // Même garde qu'Entrée : un double S supprimerait deux cartes, dont une sans Annuler
+      if (!card() || e.repeat || performance.now() - shownAt < 400 || e.ctrlKey || e.metaKey || e.altKey || t.matches("input, textarea, select")) return;
+      const k = e.key.toLowerCase();
+      if (k === "m") edit();
+      else if (k === "s") act("delete");
+      else return;
+      e.preventDefault();
     };
     addEventListener("keydown", key);
     onCleanup(() => removeEventListener("keydown", key));
@@ -130,6 +140,20 @@ export default function Review(p: { id: string }) {
       </header>
 
       <Switch>
+        <Match when={queue.error}>
+          <main class="col end">
+            <h1 class="lead-title">Les cartes n'ont pas pu être chargées.</h1>
+            <p class="muted">Vérifie ta connexion, puis réessaie.</p>
+            <div class="stack">
+              <button class="btn primary lg block" onClick={() => refetch()}>
+                Réessayer
+              </button>
+              <button class="btn block" onClick={() => go(back)}>
+                Retour à la matière
+              </button>
+            </div>
+          </main>
+        </Match>
         <Match when={done()}>
           <main class="col end">
             <h1 class="lead-title">{summary()}</h1>
@@ -214,11 +238,17 @@ export default function Review(p: { id: string }) {
                       Entrée
                     </span>
                   </button>
-                  <button class="btn lg" onClick={() => (void commit(), setLost(false), setEditing(true))}>
+                  <button class="btn lg" onClick={edit} aria-keyshortcuts="M">
                     Modifier
+                    <span class="key" aria-hidden="true">
+                      M
+                    </span>
                   </button>
-                  <button class="btn lg" onClick={() => act("delete")}>
+                  <button class="btn lg" onClick={() => act("delete")} aria-keyshortcuts="S">
                     Supprimer
+                    <span class="key" aria-hidden="true">
+                      S
+                    </span>
                   </button>
                 </div>
               </div>

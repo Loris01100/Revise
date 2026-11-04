@@ -1,4 +1,4 @@
-import { For, Show, createResource, createSignal, onCleanup } from "solid-js";
+import { For, Show, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import { Expired, Failed, api, type CardType, type Subject } from "./api";
 import { buildPrompt } from "./prompt";
 import { Icon, Link, TYPES, announce, cardsLabel, go, one, plain, setSettings, settings } from "./ui";
@@ -25,7 +25,8 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function Import(p: { id: string }) {
   const [subjects] = createResource(() => api<Subject[]>("GET", "/subjects"));
-  const subject = () => subjects()?.find((s) => s.id === p.id);
+  // Liste indisponible : l'import marche sans le nom de la matière
+  const subject = () => (subjects.error ? undefined : subjects()?.find((s) => s.id === p.id));
   const back = `/matieres/${p.id}`;
 
   // --- 1. Le prompt ---
@@ -36,6 +37,7 @@ export default function Import(p: { id: string }) {
   const [sent, setSent] = createSignal(false);
   const [copyFailed, setCopyFailed] = createSignal(false);
   const [typeError, setTypeError] = createSignal(false);
+  const [shown, setShown] = createSignal(false);
   let details!: HTMLDetailsElement;
   let promptText!: HTMLTextAreaElement;
   // L'ordre des types suit celui de l'éditeur, pas celui des clics
@@ -77,13 +79,17 @@ export default function Import(p: { id: string }) {
   document.addEventListener("visibilitychange", back3);
   onCleanup(() => document.removeEventListener("visibilitychange", back3));
 
+  // Sous un champ de 12 lignes, le message tombe hors de l'écran du téléphone
+  const fail = (m: string) => {
+    setError(m);
+    paste.focus();
+    document.getElementById("paste-err")?.scrollIntoView({ block: "center" });
+  };
   async function submit() {
     if (busy()) return;
     setFailed(false);
-    if (!text().trim()) {
-      setError("Colle la réponse de Claude.");
-      return paste.focus();
-    }
+    setError("");
+    if (!text().trim()) return fail("Colle la réponse de Claude.");
     setBusy(true);
     try {
       setReport(await api<Report>("POST", "/imports", { subject_id: p.id, text: text() }));
@@ -92,12 +98,7 @@ export default function Import(p: { id: string }) {
       if (e instanceof Expired) return;
       const m = problem(e, text());
       if (m === "network") setFailed(true);
-      else {
-        setError(m);
-        paste.focus();
-        // Sous un champ de 12 lignes, le message tombe hors de l'écran du téléphone
-        document.getElementById("paste-err")?.scrollIntoView({ block: "nearest" });
-      }
+      else fail(m);
     } finally {
       setBusy(false);
     }
@@ -109,11 +110,40 @@ export default function Import(p: { id: string }) {
     queueMicrotask(() => paste.focus());
   };
 
+  // Les raisons nomment le champ fautif : elles se recopient telles quelles à Claude
+  const [reasonsCopied, setReasonsCopied] = createSignal(false);
+  const [reasonsFailed, setReasonsFailed] = createSignal(false);
+  async function copyReasons(list: Report["rejected"]) {
+    const lines = list.map((x) => `- Carte ${x.index + 1}${x.question ? ` (« ${short(plain(x.question))} »)` : ""} : ${x.reason}`);
+    try {
+      await navigator.clipboard.writeText(
+        `Ces cartes ont été écartées à l'import :\n${lines.join("\n")}\n\nCorrige-les et renvoie uniquement le bloc JSON des cartes corrigées.`,
+      );
+      setReasonsFailed(false);
+      setReasonsCopied(true);
+      announce("Raisons copiées.");
+      setTimeout(() => setReasonsCopied(false), 3000);
+    } catch {
+      setReasonsFailed(true);
+    }
+  }
+
+  // Échap ramène à la matière, sauf dans un champ ou avec une réponse collée qui serait perdue
+  onMount(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || document.querySelector("dialog[open]")) return;
+      if ((e.target as HTMLElement).matches("input, textarea") || (text() && !report())) return;
+      go(back);
+    };
+    addEventListener("keydown", key);
+    onCleanup(() => removeEventListener("keydown", key));
+  });
+
   return (
     <div class="page import">
       <header class="top">
         <div class="top-start">
-          <Link href={back} class="icon-btn">
+          <Link href={back} class="icon-btn" aria-keyshortcuts="Escape">
             <Icon name="back" />
             <span class="sr-only">Retour à la matière</span>
           </Link>
@@ -163,6 +193,8 @@ export default function Import(p: { id: string }) {
                           <label class="check">
                             <input
                               type="checkbox"
+                              name="types"
+                              value={k}
                               checked={types().includes(k as CardType)}
                               onChange={(e) => {
                                 toggle(k as CardType, e.currentTarget.checked);
@@ -179,15 +211,15 @@ export default function Import(p: { id: string }) {
                     </p>
                   </fieldset>
                 </div>
-                <button class="btn" classList={{ primary: !sent() }} onClick={copy} aria-describedby="copy-err">
+                <button class="btn" classList={{ primary: !sent() && !text() }} onClick={copy} aria-describedby="copy-err">
                   {copied() ? "Prompt copié" : sent() ? "Copier à nouveau" : "Copier le prompt"}
                 </button>
                 <p id="copy-err" class="hint">
                   {copyFailed() ? "Copie le texte sélectionné." : ""}
                 </p>
-                <details ref={details} class="prompt">
-                  <summary>Voir le prompt</summary>
-                  <textarea ref={promptText} class="field" readonly rows={12} value={buildPrompt(count(), types())} aria-label="Prompt" />
+                <details ref={details} class="prompt" onToggle={(e) => setShown(e.currentTarget.open)}>
+                  <summary>{shown() ? "Masquer le prompt" : "Voir le prompt"}</summary>
+                  <textarea ref={promptText} id="prompt-text" class="field" readonly rows={12} value={buildPrompt(count(), types())} aria-label="Prompt" />
                 </details>
               </li>
               <li>
@@ -227,7 +259,13 @@ export default function Import(p: { id: string }) {
                 <p id="paste-err" class="error-text">
                   {error()}
                 </p>
-                <button class="btn primary" onClick={submit} disabled={busy()} aria-keyshortcuts="Control+Enter">
+                <button
+                  class="btn"
+                  classList={{ primary: sent() || !!text() }}
+                  onClick={submit}
+                  disabled={busy()}
+                  aria-keyshortcuts="Control+Enter"
+                >
                   {busy() ? "Import…" : "Importer les cartes"}
                   <span class="key" aria-hidden="true">
                     Ctrl+Entrée
@@ -274,25 +312,36 @@ export default function Import(p: { id: string }) {
                   </button>
                 </Show>
 
-                <Show when={r().rejected.length}>
-                  <details class="rejected" open={n === 0}>
-                    <summary>
-                      {r().rejected.length} {one(r().rejected.length) ? "carte écartée" : "cartes écartées"}
-                    </summary>
-                    <ul>
-                      <For each={others}>
-                        {(x) => (
-                          <li>
-                            <strong>{x.question ? short(plain(x.question)) : `Carte ${x.index + 1}`}</strong>
-                            <span class="muted"> — {cap(x.reason)}</span>
-                          </li>
-                        )}
-                      </For>
-                      <Show when={dup}>
-                        <li class="muted">{one(dup) ? "1 était déjà dans la matière." : `${dup} étaient déjà dans la matière.`}</li>
-                      </Show>
-                    </ul>
-                  </details>
+                {/* Un doublon n'est pas une erreur : il se dit à part, hors de la liste des cartes écartées */}
+                <Show when={others.length || (dup && n > 0)}>
+                  <div class="rejected">
+                    <Show when={dup && n > 0}>
+                      <p class="muted">{one(dup) ? "1 carte était déjà dans la matière." : `${dup} cartes étaient déjà dans la matière.`}</p>
+                    </Show>
+                    <Show when={others.length}>
+                      <details open={n === 0}>
+                        <summary>
+                          {others.length} {one(others.length) ? "carte écartée" : "cartes écartées"}
+                        </summary>
+                        <ul>
+                          <For each={others}>
+                            {(x) => (
+                              <li>
+                                <strong>{x.question ? short(plain(x.question)) : `Carte ${x.index + 1}`}</strong>
+                                <span class="muted"> — {cap(x.reason)}</span>
+                              </li>
+                            )}
+                          </For>
+                        </ul>
+                        <button class="btn small" onClick={() => copyReasons(others)} aria-describedby="reasons-err">
+                          {reasonsCopied() ? "Raisons copiées" : "Copier ces raisons pour Claude"}
+                        </button>
+                        <p id="reasons-err" class="hint">
+                          {reasonsFailed() ? "La copie n'a pas marché. Sélectionne les lignes ci-dessus." : ""}
+                        </p>
+                      </details>
+                    </Show>
+                  </div>
                 </Show>
 
                 <Show when={n > 0}>
