@@ -1,5 +1,6 @@
 import { For, Show, createEffect, createResource, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
 import { Offline, api, enqueue, kept, setKept, type Card, type CardType, type Color, type KeptCard } from "./api";
+import type { Produce } from "./prompt";
 
 // --- Navigation : quelques chemins, sans routeur ---
 
@@ -43,6 +44,7 @@ export type Settings = {
   theme: "auto" | "light" | "dark";
   importCount: number;
   importTypes: CardType[];
+  importProduce: Produce[];
 };
 const SKEY = "revise.settings";
 const [settings, setSettingsSignal] = createSignal<Settings>({
@@ -52,6 +54,7 @@ const [settings, setSettingsSignal] = createSignal<Settings>({
   theme: "auto",
   importCount: 20,
   importTypes: ["qa", "cloze", "mcq", "explain"],
+  importProduce: ["code", "schema"],
   ...JSON.parse(localStorage.getItem(SKEY) ?? "{}"),
 });
 export { settings };

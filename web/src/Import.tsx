@@ -1,6 +1,6 @@
 import { For, Show, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import { Expired, Failed, api, type CardType, type Subject } from "./api";
-import { buildPrompt } from "./prompt";
+import { PRODUCE, buildPrompt, type Produce } from "./prompt";
 import { Icon, Link, TYPES, announce, cardsLabel, go, message, one, plain, setMessage, setSettings, settings, short } from "./ui";
 
 type Report = { cards: unknown[]; rejected: { index: number; question: string | null; reason: string }[] };
@@ -39,6 +39,8 @@ export default function Import(p: { id: string }) {
   // --- 1. Le prompt ---
   const count = () => settings().importCount;
   const types = () => settings().importTypes;
+  const produce = () => settings().importProduce;
+  const prompt = () => buildPrompt(count(), types(), produce());
   const [copied, setCopied] = createSignal(false);
   // Le prompt est parti chez Claude : au retour sur l'onglet, la suite est l'étape 3.
   // Gardé pour l'onglet : le téléphone recharge souvent la page pendant le passage chez Claude
@@ -63,7 +65,7 @@ export default function Import(p: { id: string }) {
   };
   async function copy() {
     try {
-      await navigator.clipboard.writeText(buildPrompt(count(), types()));
+      await navigator.clipboard.writeText(prompt());
       setCopyFailed(false);
       setCopied(true);
       setSent(true);
@@ -244,11 +246,36 @@ export default function Import(p: { id: string }) {
                         {typeError() ? "Garde au moins un type." : ""}
                       </p>
                     </fieldset>
+                    <fieldset aria-describedby="produce-hint">
+                      <legend class="label">Exercices</legend>
+                      <div class="types">
+                        <For each={Object.entries(PRODUCE)}>
+                          {([k, label]) => (
+                            <label class="check">
+                              <input
+                                type="checkbox"
+                                name="produce"
+                                value={k}
+                                checked={produce().includes(k as Produce)}
+                                onChange={(e) => {
+                                  const on = e.currentTarget.checked;
+                                  setSettings({ importProduce: (Object.keys(PRODUCE) as Produce[]).filter((x) => (x === k ? on : produce().includes(x))) });
+                                }}
+                              />
+                              {label}
+                            </label>
+                          )}
+                        </For>
+                      </div>
+                      <p id="produce-hint" class="hint">
+                        Seulement si le cours en contient.
+                      </p>
+                    </fieldset>
                   </div>
                 </Show>
                 <details ref={details} class="prompt" onToggle={(e) => setShown(e.currentTarget.open)}>
                   <summary>{shown() ? "Masquer le prompt" : "Voir le prompt"}</summary>
-                  <textarea ref={promptText} id="prompt-text" class="field" readonly rows={12} value={buildPrompt(count(), types())} aria-label="Prompt" />
+                  <textarea ref={promptText} id="prompt-text" class="field" readonly rows={12} value={prompt()} aria-label="Prompt" />
                 </details>
               </li>
               <li>

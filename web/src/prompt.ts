@@ -9,7 +9,19 @@ const RULES: Record<CardType, string> = {
 };
 
 /** Prompt à donner à Claude avec le cours en pièce jointe. */
-export function buildPrompt(count: number, types: CardType[]): string {
+export type Produce = "code" | "schema";
+export const PRODUCE: Record<Produce, string> = { code: "Écrire du code", schema: "Faire des schémas" };
+
+// Cartes "explain" qui demandent de produire, selon ce que l'étudiant a coché
+function produceRule(p: Produce[]): string {
+  if (!p.length) return `- Ne fais pas de carte qui demande d'écrire du code ou de dessiner un schéma.`;
+  const what = p.length === 2 ? "du code ou des schémas" : p[0] === "code" ? "du code" : "des schémas";
+  const ex = [p.includes("code") && "« Écris la commande qui… »", p.includes("schema") && "« Dessine le diagramme de séquence de… »"].filter(Boolean).join(", ");
+  const block = p.length === 2 ? "le bloc de code ou le bloc \`\`\`mermaid attendu" : p[0] === "code" ? "le bloc de code attendu" : "le bloc \`\`\`mermaid attendu";
+  return `- Si le cours enseigne à produire ${what} (programmation, commandes, configuration, modélisation UML, réseaux…), 2 à 4 cartes de type "explain" demandent de le produire : ${ex}. "answer" contient alors une phrase avec le terme clé entre ==, puis ${block}, tiré du cours. Pour les autres cours, ne fais pas ce genre de carte.`;
+}
+
+export function buildPrompt(count: number, types: CardType[], produce: Produce[] = []): string {
   return `Tu prépares des cartes de révision (répétition espacée) à partir du cours joint (document, ou photos de tableau, de notes manuscrites ou de pages).
 
 Règles :
@@ -41,7 +53,7 @@ Format de sortie : uniquement un bloc de code JSON, sans texte avant ni après. 
 - Dans "answer" des cartes "qa" et "explain", entoure de == le terme clé à retenir, un seul par réponse : "La demande baisse quand le prix monte : c'est l'==élasticité-prix==." Jamais de == dans "question", "choices", "explanation", ni dans "answer" des "mcq" et "cloze".
 - Si le cours contient du code (commandes, fichiers de configuration, extraits de programme), écris-le dans "question", "answer" ou "explanation" : en ligne entre \`accents graves\`, ou en bloc \`\`\`langage sur ses propres lignes. Pas de bloc de code dans "choices". Une "cloze" peut porter sur du code : le ___ remplace alors un mot-clé, un nom ou une option dans le code, et "answer" est ce mot seul. Garde un extrait court : les lignes utiles à la notion.
 - Si une notion du cours est un schéma (architecture, UML, séquence, pipeline, états), tu peux le redessiner dans un bloc \`\`\`mermaid valide (flowchart, sequenceDiagram, classDiagram, stateDiagram-v2…), avec les libellés du cours. N'invente pas de schéma que le cours ne contient pas.
-- Si le cours enseigne à produire du code ou des schémas (programmation, commandes, configuration, modélisation UML, réseaux…), 2 à 4 cartes "explain" demandent de le produire : « Écris la commande qui… », « Dessine le diagramme de séquence de… ». "answer" contient alors une phrase avec le terme clé entre ==, puis le bloc de code ou le bloc \`\`\`mermaid attendu, tiré du cours. Pour les autres cours, ne fais pas ce genre de carte.
+${produceRule(produce)}
 - Dans le JSON, échappe les retours à la ligne en \\n et les guillemets en \\".
 - "choices" vaut null sauf pour "mcq".
 - "source_page" est le numéro de la page du cours où se trouve la notion, ou null si le document n'a pas de pages (une photo n'en a pas, sauf numéro visible).`;
