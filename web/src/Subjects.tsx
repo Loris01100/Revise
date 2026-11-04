@@ -2,7 +2,7 @@ import { For, Index, Show, createEffect, createResource, createSignal } from "so
 import { createStore, reconcile } from "solid-js/store";
 import { api, type Card, type CardType, type Color, type Subject } from "./api";
 import { DrawDialog } from "./Draw";
-import { COLORS, Confirm, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, one, plain, start } from "./ui";
+import { COLORS, Confirm, DRAWING, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, loadDrawing, one, plain, start, type Shape } from "./ui";
 
 const STATUS: Record<string, string> = { active: "Active", suspended: "Suspendue", draft: "Brouillon" };
 const norm = (s: string) =>
@@ -421,19 +421,41 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
   const close = () => (snapshot() !== initial ? setLeaving(true) : p.onClose());
   let form!: HTMLFormElement;
 
-  // Dessin en cours pour un champ : sa référence s'insère au curseur
-  const [drawFor, setDrawFor] = createSignal<[string, (v: string) => void] | null>(null);
+  // Dessin en cours pour un champ : sa référence s'insère au curseur, ou remplace celle du dessin modifié
+  type Target = { field: string; set: (v: string) => void; id?: string; shapes?: Shape[] };
+  const [drawFor, setDrawFor] = createSignal<Target | null>(null);
   function insertDrawing(id: string) {
-    const [field, set] = drawFor()!;
+    const { field, set, id: old } = drawFor()!;
     const el = document.getElementById(field) as HTMLTextAreaElement;
-    set(el.value.slice(0, el.selectionEnd) + `![dessin](${id})` + el.value.slice(el.selectionEnd));
+    const ref = `![dessin](${id})`;
+    set(old ? el.value.replace(`![dessin](${old})`, ref) : el.value.slice(0, el.selectionEnd) + ref + el.value.slice(el.selectionEnd));
     setDrawFor(null);
   }
-  const DrawButton = (q: { field: string; set: (v: string) => void }) => (
-    <button type="button" class="link draw-add" onClick={() => setDrawFor([q.field, q.set])}>
-      Ajouter un dessin
-    </button>
-  );
+  async function editDrawing(d: Target) {
+    try {
+      setDrawFor({ ...d, shapes: await loadDrawing(d.id!) });
+    } catch {
+      announce("Le dessin n'a pas pu être ouvert.");
+    }
+  }
+  const DrawButton = (q: { field: string; value: string; set: (v: string) => void }) => {
+    const ids = () => [...q.value.matchAll(DRAWING)].map((m) => m[1]);
+    return (
+      <div class="draw-add">
+        {/* Index : le bouton reste en place quand le dessin modifié change d'id, et garde le focus */}
+        <Index each={ids()}>
+          {(id, k) => (
+            <button type="button" class="link" onClick={() => editDrawing({ ...q, id: id() })}>
+              {ids().length > 1 ? `Modifier le dessin ${k + 1}` : "Modifier le dessin"}
+            </button>
+          )}
+        </Index>
+        <button type="button" class="link" onClick={() => setDrawFor(q)}>
+          Ajouter un dessin
+        </button>
+      </div>
+    );
+  };
 
   function validate() {
     const e: Record<string, string> = {};
@@ -537,7 +559,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           aria-describedby="question-err question-hint"
         />
         <Preview text={question()} />
-        <DrawButton field="f-question" set={setQuestion} />
+        <DrawButton field="f-question" value={question()} set={setQuestion} />
         <Show when={type() === "cloze"}>
           <p id="question-hint" class="hint">
             Marque le mot à retrouver avec ___.
@@ -566,7 +588,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
                 aria-describedby="answer-err answer-hint"
               />
               <Preview text={answer()} />
-              <DrawButton field="f-answer" set={setAnswer} />
+              <DrawButton field="f-answer" value={answer()} set={setAnswer} />
               <p id="answer-hint" class="hint">
                 Entoure le terme clé de == pour le surligner à la correction : ==élasticité==.
               </p>
@@ -616,7 +638,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
           onInput={(e) => setExplanation(e.currentTarget.value)}
         />
         <Preview text={explanation()} />
-        <DrawButton field="f-explanation" set={setExplanation} />
+        <DrawButton field="f-explanation" value={explanation()} set={setExplanation} />
 
         <div class="actions">
           <button type="button" class="btn quiet" onClick={close}>
@@ -634,7 +656,7 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
       </form>
 
       <Show when={drawFor()}>
-        <DrawDialog onDone={insertDrawing} onClose={() => setDrawFor(null)} />
+        <DrawDialog shapes={drawFor()!.shapes} onDone={insertDrawing} onClose={() => setDrawFor(null)} />
       </Show>
       <Show when={leaving()}>
         <Confirm

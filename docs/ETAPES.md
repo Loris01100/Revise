@@ -211,7 +211,7 @@ Vérification du rendu :
 - [x] **Relecture** : cartes brouillon une par une → accepter / modifier / supprimer
   - Entrée depuis la matière (`/matieres/:id/import`, `/matieres/:id/relecture`) ; brouillons en attente signalés dans la matière ; suppression annulable, sans confirmation
 - [x] Seules les cartes acceptées reçoivent un `card_state` et entrent en révision
-- [ ] `/impeccable critique`, `audit` et `polish` sur Import et Relecture
+- [x] `/impeccable critique`, `audit` et `polish` sur Import et Relecture → [web/.impeccable/critique/](../web/.impeccable/critique/)
 
 ### 3.5 Vérification
 
@@ -225,13 +225,16 @@ Vérification du rendu :
 - [x] Prompt : code en ligne ou en bloc, schéma Mermaid seulement s'il est dans le cours
 - [x] Session : champ de réponse à chasse fixe, sans correcteur, `Tab` insère une tabulation sur les cartes de code
 - [x] Éditeur et relecture : aperçu rendu sous chaque champ qui contient du code
-- [ ] Vérifier dans le navigateur : schéma clair/sombre, aperçu, `Tab`
+- [x] Vérifier dans le navigateur : schéma clair/sombre, aperçu, `Tab` (Chrome, API simulée)
 - [x] Coloration syntaxique : Shiki chargé à la demande, thèmes GitHub clair/sombre via `light-dark()`, texte brut si langage inconnu
 - [x] Dessin à main levée et formes simples : crayon, trait, flèche, rectangle, ellipse ; table `drawings` (migration 0002), carte → `![dessin](id)`, SVG reconstruit depuis les coordonnées
-- [ ] Migration 0002 sur la base distante : `wrangler d1 migrations apply revise --remote`
-- [ ] Dessins : modifier un dessin existant, texte dans le dessin, suppression des dessins orphelins
-- [ ] Trous `___` dans du code
-- [ ] Mermaid en cache hors ligne (avec la PWA)
+- [x] Migration 0002 sur la base distante : `wrangler d1 migrations apply revise --remote`
+- [x] Dessins : modifier un dessin existant, texte dans le dessin, suppression des dessins orphelins
+  - Modifier enregistre un nouveau dessin et remplace la référence dans le champ ; un dessin ne change jamais
+  - Outil « Texte » : forme `{ t: "text", p: [x, y], s }`, 100 caractères au plus
+  - Dessin que plus aucune carte ne cite : effacé à la création d'un dessin suivant, un jour après sa propre création
+- [x] Trous `___` dans du code : blanc dans le code en ligne et les blocs colorés ; le prompt autorise les « cloze » sur du code
+- [ ] Mermaid en cache hors ligne (avec la PWA, phase 4)
 
 ---
 

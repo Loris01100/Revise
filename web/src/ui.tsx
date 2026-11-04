@@ -121,7 +121,7 @@ export const COLORS: [Color, string][] = [
 ];
 export const hl = (c: Color | null | undefined) => `--hl: var(--hl-${c ?? "yellow"})`;
 
-const DRAWING = /!\[dessin\]\([0-9a-f-]{36}\)/g;
+export const DRAWING = /!\[dessin\]\(([0-9a-f-]{36})\)/g;
 /** Texte sans les marques `==…==`, dessins remplacés par « (dessin) ». */
 export const plain = (s: string) => s.replace(/==(.+?)==/g, "$1").replace(DRAWING, "(dessin)");
 
@@ -135,25 +135,32 @@ export function Marked(p: { text: string; draw?: boolean }) {
 }
 
 /** Texte de carte : ```lang … ``` en bloc de code, ```mermaid … ``` en schéma, `…` en code, ![dessin](id) en dessin ;
- *  le reste passe par Marked.
+ *  le reste passe par Marked. `cloze` : chaque `___`, code compris, devient un blanc, rempli par `fill` s'il est donné.
  *  Tout est en <code>/<span> pour rester valide dans le <h1> de la question et le <p> de la réponse. */
-export function Rich(p: { text: string; draw?: boolean }) {
+export function Rich(p: { text: string; draw?: boolean; cloze?: boolean; fill?: string }) {
+  const holes = (s: string, f: (x: string) => JSX.Element) => (p.cloze ? blanks(s, p.fill, f) : f(s));
   return (
     <>
       {p.text.split(/(```[^\n]*\n[\s\S]*?```|`[^`\n]+`|!\[dessin\]\([0-9a-f-]{36}\))/).map((s, i) => {
-        if (i % 2 === 0) return <Marked text={s} draw={p.draw} />;
+        if (i % 2 === 0) return holes(s, (x) => <Marked text={x} draw={p.draw} />);
         if (s.startsWith("![")) return <Drawing id={s.slice(10, -1)} />;
         const m = s.match(/^```([^\n]*)\n([\s\S]*?)\n?```$/);
-        if (!m) return <code>{s.slice(1, -1)}</code>;
+        if (!m) return <code>{holes(s.slice(1, -1), (x) => x)}</code>;
         const lang = m[1].trim();
-        return lang === "mermaid" ? <Diagram src={m[2]} /> : <Code lang={lang} src={m[2]} />;
+        return lang === "mermaid" ? <Diagram src={m[2]} /> : <Code lang={lang} src={m[2]} cloze={p.cloze} fill={p.fill} />;
       })}
     </>
   );
 }
 
+function Blank(p: { fill?: string }) {
+  return <span class="blank">{p.fill ? <mark class="draw">{p.fill}</mark> : <span class="sr-only">blanc</span>}</span>;
+}
+const blanks = (s: string, fill?: string, f: (x: string) => JSX.Element = (x) => x) =>
+  s.split(/_{3,}/).map((x, k) => (k ? [<Blank fill={fill} />, f(x)] : f(x)));
+
 /** Bloc de code coloré par Shiki (moteur et thèmes de VS Code), chargé au premier bloc ; texte brut si le langage est inconnu. */
-function Code(p: { lang: string; src: string }) {
+function Code(p: { lang: string; src: string; cloze?: boolean; fill?: string }) {
   const [html, setHtml] = createSignal<string>();
   onMount(async () => {
     const { codeToHtml, bundledLanguages } = await import("shiki");
@@ -161,10 +168,17 @@ function Code(p: { lang: string; src: string }) {
     // light-dark() suit color-scheme, donc le thème de l'app sans CSS en plus
     const opts = { lang: p.lang, themes: { light: "github-light", dark: "github-dark" }, defaultColor: "light-dark()" } as const;
     // Échappé par Shiki ; structure inline (<span>, <br>) pour rester valide dans <h1> et <p>
-    setHtml(await codeToHtml(p.src, { ...opts, structure: "inline" }));
+    let out = await codeToHtml(p.src, { ...opts, structure: "inline" });
+    // Les styles de Shiki n'ont pas de « ___ » : seul le texte du code est touché
+    if (p.cloze) {
+      const esc = (x: string) => x.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+      const fill = p.fill ? `<mark class="draw">${esc(p.fill)}</mark>` : `<span class="sr-only">blanc</span>`;
+      out = out.replace(/_{3,}/g, () => `<span class="blank">${fill}</span>`);
+    }
+    setHtml(out);
   });
   return (
-    <Show when={html()} fallback={<code class="block">{p.src}</code>}>
+    <Show when={html()} fallback={<code class="block">{p.cloze ? blanks(p.src, p.fill) : p.src}</code>}>
       <code class="block" innerHTML={html()} />
     </Show>
   );
@@ -190,8 +204,8 @@ function Diagram(p: { src: string }) {
   );
 }
 
-/** Forme d'un dessin : `p` est une suite x, y sur une grille 600 × 400 (deux points, sauf le crayon). */
-export type Shape = { t: "pen" | "line" | "arrow" | "rect" | "ellipse"; p: number[] };
+/** Forme d'un dessin : `p` est une suite x, y sur une grille 600 × 400 (deux points, sauf le crayon ; un seul pour le texte `s`). */
+export type Shape = { t: "pen" | "line" | "arrow" | "rect" | "ellipse" | "text"; p: number[]; s?: string };
 
 /** Dessin reconstruit à partir des seules coordonnées, jamais d'un SVG stocké. */
 export function Sketch(p: { shapes: Shape[]; children?: JSX.Element }) {
@@ -201,6 +215,12 @@ export function Sketch(p: { shapes: Shape[]; children?: JSX.Element }) {
         {(s) => {
           const [x1, y1, x2, y2] = s.p;
           if (s.t === "pen") return <polyline points={s.p.join(" ")} />;
+          if (s.t === "text")
+            return (
+              <text x={x1} y={y1} class="label">
+                {s.s}
+              </text>
+            );
           if (s.t === "rect") return <rect x={Math.min(x1, x2)} y={Math.min(y1, y2)} width={Math.abs(x2 - x1)} height={Math.abs(y2 - y1)} />;
           if (s.t === "ellipse")
             return <ellipse cx={(x1 + x2) / 2} cy={(y1 + y2) / 2} rx={Math.abs(x2 - x1) / 2} ry={Math.abs(y2 - y1) / 2} />;
@@ -215,16 +235,14 @@ export function Sketch(p: { shapes: Shape[]; children?: JSX.Element }) {
   );
 }
 
-// Un dessin ne change jamais : chargé une fois par page
+// Un dessin ne change jamais (le modifier en crée un autre) : chargé une fois par page
 const drawings = new Map<string, Promise<Shape[]>>();
+export function loadDrawing(id: string) {
+  if (!drawings.has(id)) drawings.set(id, api<{ shapes: Shape[] }>("GET", `/drawings/${id}`).then((r) => r.shapes));
+  return drawings.get(id)!.catch((e) => (drawings.delete(id), Promise.reject(e)));
+}
 function Drawing(p: { id: string }) {
-  const [shapes] = createResource(
-    () => p.id,
-    (id) => {
-      if (!drawings.has(id)) drawings.set(id, api<{ shapes: Shape[] }>("GET", `/drawings/${id}`).then((r) => r.shapes));
-      return drawings.get(id)!.catch((e) => (drawings.delete(id), Promise.reject(e)));
-    },
-  );
+  const [shapes] = createResource(() => p.id, loadDrawing);
   return (
     <span class="drawing">
       <Show when={!shapes.error} fallback={<span class="muted">Dessin indisponible</span>}>
@@ -250,23 +268,8 @@ export function Preview(p: { text: string }) {
   );
 }
 
-/** Question de texte à trous : `___` devient un blanc à remplir. */
-export function Cloze(p: { text: string; fill?: string }) {
-  return (
-    <For each={plain(p.text).split(/_{3,}/)}>
-      {(s, i) => (
-        <>
-          {i() > 0 && (
-            <span class="blank">
-              {p.fill ? <mark class="draw">{p.fill}</mark> : <span class="sr-only">blanc</span>}
-            </span>
-          )}
-          {s}
-        </>
-      )}
-    </For>
-  );
-}
+/** Question de texte à trous : `___` devient un blanc à remplir, aussi dans le code. */
+export const Cloze = (p: { text: string; fill?: string }) => <Rich text={p.text} cloze fill={p.fill} />;
 
 // --- Icônes (tracé 2 px, 24 × 24) ---
 

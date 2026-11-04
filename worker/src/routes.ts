@@ -282,28 +282,40 @@ api.patch("/parked/:id", async (c) => {
   return res.meta.changes ? c.body(null, 204) : notFound(c);
 });
 
-// Dessins : uniquement des coordonnées entières, le SVG est reconstruit côté client
-const SHAPES = ["pen", "line", "arrow", "rect", "ellipse"];
+// Dessins : uniquement des coordonnées entières (et le texte des étiquettes), le SVG est reconstruit côté client
+const SHAPES = ["pen", "line", "arrow", "rect", "ellipse", "text"];
+const coords = (p: any, min: number, max: number) =>
+  Array.isArray(p) &&
+  p.length >= min &&
+  p.length <= max &&
+  p.length % 2 === 0 &&
+  p.every((x: unknown) => Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 600);
 const shapesOk = (v: any) =>
   Array.isArray(v) &&
   v.length > 0 &&
   v.length <= 500 &&
-  v.every(
-    (s) =>
-      SHAPES.includes(s?.t) &&
-      Array.isArray(s.p) &&
-      s.p.length >= 4 &&
-      s.p.length % 2 === 0 &&
-      s.p.length <= (s.t === "pen" ? 4000 : 4) &&
-      s.p.every((x: unknown) => Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 600),
+  v.every((s) =>
+    s?.t === "text" ? coords(s.p, 2, 2) && str(s.s, 100) : SHAPES.includes(s?.t) && coords(s.p, 4, s.t === "pen" ? 4000 : 4),
   );
+
+// Dessin que plus aucune carte ne cite (remplacé, carte supprimée) : effacé un jour après sa création,
+// le temps que la carte qui vient de l'insérer soit enregistrée
+// ponytail: parcourt toutes les cartes à chaque nouveau dessin ; une table de liens si la base grossit
+const ORPHAN_MS = 24 * 3600_000;
 
 api.post("/drawings", bodyLimit({ maxSize: 512 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
   const b = await body(c);
   if (!shapesOk(b.shapes)) return bad(c, "shapes");
   const id = crypto.randomUUID();
-  const shapes = JSON.stringify(b.shapes.map(({ t, p }: { t: string; p: number[] }) => ({ t, p })));
-  await c.env.DB.prepare("INSERT INTO drawings (id, shapes, created_at) VALUES (?, ?, ?)").bind(id, shapes, now()).run();
+  const t = now();
+  const shapes = JSON.stringify(b.shapes.map(({ t, p, s }: Record<string, any>) => (t === "text" ? { t, p, s: s.trim() } : { t, p })));
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      `DELETE FROM drawings WHERE created_at < ? AND NOT EXISTS (
+         SELECT 1 FROM cards WHERE instr(question || answer || COALESCE(explanation, ''), drawings.id) > 0)`,
+    ).bind(new Date(Date.parse(t) - ORPHAN_MS).toISOString()),
+    c.env.DB.prepare("INSERT INTO drawings (id, shapes, created_at) VALUES (?, ?, ?)").bind(id, shapes, t),
+  ]);
   return c.json({ id }, 201);
 });
 

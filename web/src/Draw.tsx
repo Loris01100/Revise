@@ -8,17 +8,23 @@ const TOOLS: [Shape["t"], string][] = [
   ["arrow", "Flèche"],
   ["rect", "Rectangle"],
   ["ellipse", "Ellipse"],
+  ["text", "Texte"],
 ];
 
-/** Éditeur de dessin : enregistre les formes et rend l'id du dessin à insérer dans la carte. */
-export function DrawDialog(p: { onDone: (id: string) => void; onClose: () => void }) {
+/** Éditeur de dessin : enregistre les formes et rend l'id du dessin à insérer dans la carte.
+ *  `shapes` : dessin existant à modifier ; il est enregistré comme un nouveau dessin. */
+export function DrawDialog(p: { shapes?: Shape[]; onDone: (id: string) => void; onClose: () => void }) {
   const [tool, setTool] = createSignal<Shape["t"]>("pen");
-  const [shapes, setShapes] = createSignal<Shape[]>([]);
+  const [shapes, setShapes] = createSignal<Shape[]>(p.shapes ?? []);
+  const [label, setLabel] = createSignal("");
+  let labelField!: HTMLInputElement;
   const [draft, setDraft] = createSignal<Shape | null>(null);
   const [busy, setBusy] = createSignal(false);
   const [failed, setFailed] = createSignal(false);
   const [leaving, setLeaving] = createSignal(false);
-  const close = () => (shapes().length ? setLeaving(true) : p.onClose());
+  const initial = shapes();
+  const changed = () => shapes() !== initial;
+  const close = () => (changed() ? setLeaving(true) : p.onClose());
   const undo = () => setShapes(shapes().slice(0, -1));
 
   // Coordonnées entières sur la grille 600 × 400, quelle que soit la taille affichée
@@ -79,9 +85,20 @@ export function DrawDialog(p: { onDone: (id: string) => void; onClose: () => voi
               )}
             </For>
           </div>
+          <Show when={tool() === "text"}>
+            <input
+              ref={labelField}
+              class="field draw-label"
+              aria-label="Texte à placer"
+              placeholder="Texte, puis clic sur le dessin"
+              maxLength={100}
+              value={label()}
+              onInput={(e) => setLabel(e.currentTarget.value)}
+            />
+          </Show>
           <div class="chips">
             <button type="button" class="chip" disabled={!shapes().length} onClick={undo} aria-keyshortcuts="Control+Z">
-              Annuler le dernier trait
+              Annuler le dernier ajout
             </button>
             <button type="button" class="chip" disabled={!shapes().length} onClick={() => setShapes([])}>
               Tout effacer
@@ -94,6 +111,12 @@ export function DrawDialog(p: { onDone: (id: string) => void; onClose: () => voi
             if (e.button !== 0) return;
             e.currentTarget.setPointerCapture(e.pointerId);
             const [x, y] = point(e);
+            // Texte : posé d'un clic à l'endroit visé, écrit d'abord dans le champ de l'outil
+            if (tool() === "text") {
+              if (!label().trim()) return labelField.focus();
+              setShapes([...shapes(), { t: "text", p: [x, y], s: label().trim() }]);
+              return setLabel("");
+            }
             setDraft({ t: tool(), p: [x, y, x, y] });
           }}
           onPointerMove={move}
@@ -106,8 +129,8 @@ export function DrawDialog(p: { onDone: (id: string) => void; onClose: () => voi
           <button type="button" class="btn quiet" onClick={close}>
             Annuler
           </button>
-          <button type="button" class="btn primary" disabled={busy() || !shapes().length} onClick={save}>
-            Insérer le dessin
+          <button type="button" class="btn primary" disabled={busy() || !shapes().length || !changed()} onClick={save}>
+            {p.shapes ? "Enregistrer le dessin" : "Insérer le dessin"}
           </button>
         </div>
       </div>

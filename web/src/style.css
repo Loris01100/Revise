@@ -746,6 +746,10 @@ a.row:hover {
   border-bottom: 2px solid currentColor;
   line-height: 1.1;
 }
+/* Trou dans du code : quatre caractères de chasse fixe */
+code .blank {
+  min-width: 4ch;
+}
 .answer-form .field {
   font-size: 19px;
 }
@@ -876,8 +880,19 @@ a.row:hover {
   padding: 12px 14px;
 }
 .draw-add {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
   margin-top: 8px;
+  font-size: 15px;
+}
+.sketch .label {
+  fill: currentColor;
+  stroke: none;
+  font-size: 22px;
+}
+.draw-label {
+  flex: 1 1 220px;
   font-size: 15px;
 }
 dialog.draw {
