@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createResource, createSignal, on, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, unwrap } from "solid-js/store";
 import { Offline, api, enqueue, release, stalled, waitingReviews, type Parked, type Subject } from "./api";
+import { CardForm } from "./Subjects";
 import { Cloze, Dialog, Icon, Rich, announce, arrows, duration, focusFree, go, hl, one, plain, setRun, settings, start, type Run } from "./ui";
 
 const GRADES = [
@@ -19,7 +20,9 @@ const clock = (ms: number) => {
 type Review = { id: string; at: string; grade: number; ms: number };
 
 export default function Session(p: { run: Run }) {
-  const { id: sid, cards, replay } = p.run;
+  const { id: sid, replay } = p.run;
+  // Store : une carte corrigée en session s'affiche aussitôt corrigée
+  const [cards, setCards] = createStore(p.run.cards);
   const timed = p.run.mode.mode === "timed" ? p.run.mode.planned_min : 0;
   const [subjects] = createResource(() => api<Subject[]>("GET", "/subjects").catch(() => []));
   const subject = (id: string) => subjects.latest?.find((s) => s.id === id);
@@ -31,6 +34,7 @@ export default function Session(p: { run: Run }) {
   const [view, setView] = createSignal<"card" | "pause" | "end">("card");
   const [parking, setParking] = createSignal(false);
   const [help, setHelp] = createSignal("");
+  const [fixing, setFixing] = createSignal(false);
   const card = () => cards[i()];
   const cur = () => st[i()];
   const code = () => /`/.test(card().question + card().answer);
@@ -222,7 +226,7 @@ export default function Session(p: { run: Run }) {
   }
   // Mêmes cartes, même ordre, sans toucher au planning
   function redo() {
-    setRun({ ...p.run, cards: cards.filter((_, k) => st[k].review), replay: true });
+    setRun({ ...p.run, cards: unwrap(cards).filter((_, k) => st[k].review), replay: true });
   }
   function finish() {
     setRun(null);
@@ -449,6 +453,11 @@ export default function Session(p: { run: Run }) {
               <Show when={card().explanation}>
                 <p class="explanation"><Rich text={card().explanation!} /></p>
               </Show>
+              <Show when={subjectOf()}>
+                <button type="button" class="link fix-card small" onClick={() => setFixing(true)}>
+                  Modifier la carte
+                </button>
+              </Show>
 
               <div class="grades-dock">
                 <div
@@ -594,6 +603,17 @@ export default function Session(p: { run: Run }) {
           </main>
         </Match>
       </Switch>
+
+      <Show when={fixing() && subjectOf()}>
+        {(s) => (
+          <CardForm
+            subject={s()}
+            card={card()}
+            onSaved={(b) => (setCards(i(), b), announce("Carte modifiée."))}
+            onClose={() => setFixing(false)}
+          />
+        )}
+      </Show>
 
       <Show when={parking()}>
         <Dialog label="Noter une pensée" onClose={() => setParking(false)}>

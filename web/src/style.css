@@ -1004,6 +1004,13 @@ dialog.draw .actions {
   font-size: 19px;
   padding: 0 10px;
 }
+.fix-card {
+  display: block;
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-weight: 400;
+}
+
 .dock-foot {
   display: flex;
   align-items: center;

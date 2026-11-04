@@ -485,7 +485,7 @@ function SubjectForm(p: { used: (Color | null)[]; onClose: () => void; onCreated
 }
 
 /** `accept` : relecture d'un brouillon, l'enregistrement l'accepte aussi. */
-export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; onSaved: () => void; onClose: () => void }) {
+export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; onSaved: (saved: Partial<Card>) => void; onClose: () => void }) {
   const c = p.card;
   const initChoices = [...(c?.choices ?? []), "", "", "", ""].slice(0, 4);
   const [type, setType] = createSignal<CardType>(c?.type ?? "qa");
@@ -562,14 +562,14 @@ export function CardForm(p: { subject: Subject; card?: Card; accept?: boolean; o
       answer: mcq ? choices()[correct()].trim() : answer().trim(),
       choices: mcq ? choices().map((x) => x.trim()).filter(Boolean) : null,
       explanation: explanation().trim() || null,
-      ...(p.accept && { status: "active" }),
+      ...(p.accept && { status: "active" as const }),
     };
     setBusy(true);
     setFailed(false);
     try {
       if (c) await api("PATCH", `/cards/${c.id}`, body);
       else await api("POST", "/cards", { ...body, subject_id: p.subject.id });
-      p.onSaved();
+      p.onSaved(body);
       if (!again) return p.onClose();
       setQuestion("");
       setAnswer("");
