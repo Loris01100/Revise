@@ -11,7 +11,7 @@ L'unique utilisateur, étudiant avec un TDAH, révise ses cours seul, surtout su
 
 ## Selected direction
 
-**Surligneur sur polycopié.** Le monde du cours photocopié qu'on surligne pour retenir [.impeccable/mocks/decision/model-pick.html].
+**Surligneur sur polycopié.** Le monde du cours photocopié qu'on surligne pour retenir.
 
 - **Fond** : blanc de photocopie légèrement grisé, grain de toner à peine visible ; jamais crème ni papier ancien.
 - **Encre** : noir de toner pour tout le texte.

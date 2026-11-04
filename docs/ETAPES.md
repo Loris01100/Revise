@@ -161,7 +161,7 @@ Règles du mode focus :
 
 Vérification du rendu :
 - [x] `/impeccable critique` et `/impeccable audit` sur chaque écran
-  - [x] Critique (28/40) et correctifs des 2 P1 et 3 P2 → [web/.impeccable/critique/](../web/.impeccable/critique/)
+  - [x] Critique (28/40) et correctifs des 2 P1 et 3 P2
   - [x] Audit (16/20 : 1 P1, 3 P2) et contrôle à l'écran par Chrome headless sur une API simulée, de 375 à 1280 px
 - [x] `/impeccable polish` avant de déployer : focus conservé après chaque action, tableau replié selon sa place, titre d'onglet par écran
 
@@ -211,7 +211,7 @@ Vérification du rendu :
 - [x] **Relecture** : cartes brouillon une par une → accepter / modifier / supprimer
   - Entrée depuis la matière (`/matieres/:id/import`, `/matieres/:id/relecture`) ; brouillons en attente signalés dans la matière ; suppression annulable, sans confirmation
 - [x] Seules les cartes acceptées reçoivent un `card_state` et entrent en révision
-- [x] `/impeccable critique`, `audit` et `polish` sur Import et Relecture → [web/.impeccable/critique/](../web/.impeccable/critique/)
+- [x] `/impeccable critique`, `audit` et `polish` sur Import et Relecture
 
 ### 3.5 Vérification
 
