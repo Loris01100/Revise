@@ -46,6 +46,16 @@ export default function Subjects(p: { id?: string }) {
   const [creating, setCreating] = createSignal(new URLSearchParams(location.search).has("nouvelle"));
   const [editing, setEditing] = createSignal<Card | "new" | null>(null);
   const [deleting, setDeleting] = createSignal<Card | null>(null);
+  // Sélection multiple pour supprimer d'un coup ; seules les cartes visibles comptent, un filtre ne cache rien de ce qui part
+  const [picked, setPicked] = createSignal(new Set<string>());
+  const [bulk, setBulk] = createSignal(false);
+  createEffect(() => (sel()?.id, setPicked(new Set<string>())));
+  const chosen = () => shown().filter((c) => picked().has(c.id));
+  const pick = (ids: string[], on: boolean) => {
+    const n = new Set(picked());
+    for (const id of ids) on ? n.add(id) : n.delete(id);
+    setPicked(n);
+  };
   // Le toast reste jusqu'à la prochaine action
   const [toast, setToast] = createSignal<{ text: string; undo?: () => void } | null>(null);
   const act = async (f: () => Promise<unknown>, done?: { text: string; undo?: () => void }) => {
@@ -244,9 +254,33 @@ export default function Subjects(p: { id?: string }) {
                       </p>
                     }
                   >
+                    <Show when={chosen().length}>
+                      {(n) => (
+                        <div class="bulk" role="status">
+                          <span>{one(n()) ? "1 carte sélectionnée" : `${n()} cartes sélectionnées`}</span>
+                          <button class="btn small" onClick={() => (setToast(null), setBulk(true))}>
+                            Supprimer la sélection
+                          </button>
+                          <button class="link" onClick={() => setPicked(new Set<string>())}>
+                            Tout désélectionner
+                          </button>
+                        </div>
+                      )}
+                    </Show>
                     <table class="cards">
                       <thead>
                         <tr>
+                          <Show when={me()?.admin}>
+                            <th scope="col" class="pick">
+                              <input
+                                type="checkbox"
+                                aria-label="Tout sélectionner"
+                                checked={chosen().length === shown().length}
+                                ref={(el) => createEffect(() => (el.indeterminate = chosen().length > 0 && chosen().length < shown().length))}
+                                onChange={(e) => pick(shown().map((c) => c.id), e.currentTarget.checked)}
+                              />
+                            </th>
+                          </Show>
                           <th scope="col">Question</th>
                           <th scope="col">Type</th>
                           <th scope="col">État</th>
@@ -259,6 +293,16 @@ export default function Subjects(p: { id?: string }) {
                         <For each={shown()}>
                           {(c) => (
                             <tr classList={{ off: c.status !== "active" }}>
+                              <Show when={me()?.admin}>
+                                <td class="pick">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`Sélectionner « ${short(plain(c.question))} »`}
+                                    checked={picked().has(c.id)}
+                                    onChange={(e) => pick([c.id], e.currentTarget.checked)}
+                                  />
+                                </td>
+                              </Show>
                               <td class="question">{plain(c.question)}</td>
                               <td>{TYPES[c.type]}</td>
                               {/* L'état ne se dit que quand il sort de l'ordinaire */}
@@ -339,6 +383,26 @@ export default function Subjects(p: { id?: string }) {
             }}
           />
         )}
+      </Show>
+
+      <Show when={bulk()}>
+        <Confirm
+          title={one(chosen().length) ? "Supprimer 1 carte ?" : `Supprimer ${chosen().length} cartes ?`}
+          text="Leur historique de révision sera perdu."
+          yes="Supprimer"
+          no="Garder"
+          onNo={() => setBulk(false)}
+          onYes={async () => {
+            const ids = chosen().map((c) => c.id);
+            setBulk(false);
+            // ponytail: une requête par carte, en parallèle ; route groupée si on supprime des centaines de cartes
+            await act(() => Promise.all(ids.map((id) => api("DELETE", `/cards/${id}`))), {
+              text: one(ids.length) ? "1 carte supprimée." : `${ids.length} cartes supprimées.`,
+            });
+            setPicked(new Set<string>());
+            (document.querySelector<HTMLElement>(".cards tbody button") ?? document.querySelector<HTMLElement>(".detail .btn"))?.focus();
+          }}
+        />
       </Show>
 
       <Show when={toast()}>

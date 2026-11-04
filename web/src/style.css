@@ -1174,6 +1174,22 @@ p.empty {
 .cards tr.off td:not(.acts) {
   color: var(--ink-2);
 }
+.cards .pick {
+  padding-right: 4px;
+}
+.cards .pick input {
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+}
+.bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
 .cards .acts > div {
   display: flex;
   gap: 16px;
@@ -1520,13 +1536,17 @@ p.empty {
     padding: 0;
     border: 0;
   }
-  .cards td:nth-child(2),
-  .cards td:nth-child(3) {
+  .cards .pick {
+    float: left;
+    margin-right: 12px;
+  }
+  .cards .question + td,
+  .cards .question + td + td {
     display: inline;
     font-size: 15px;
     color: var(--ink-2);
   }
-  .cards td:nth-child(3):not(:empty)::before {
+  .cards .question + td + td:not(:empty)::before {
     content: " · ";
   }
   .cards .acts > div {
