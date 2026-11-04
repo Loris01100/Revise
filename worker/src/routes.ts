@@ -82,6 +82,23 @@ api.post("/subjects", async (c) => {
   return c.json({ id }, 201);
 });
 
+api.patch("/subjects/:id", async (c) => {
+  const b = await body(c);
+  if (!str(b.name, 200)) return bad(c, "name");
+  if (b.color != null && !str(b.color, 32)) return bad(c, "color");
+  const res = await c.env.DB.prepare("UPDATE subjects SET name = ?, color = ? WHERE id = ?")
+    .bind(b.name.trim(), b.color ?? null, c.req.param("id"))
+    .run();
+  return res.meta.changes ? c.body(null, 204) : notFound(c);
+});
+
+// Admin seulement : les cartes partent avec (ON DELETE CASCADE), et l'historique de chacun avec elles
+api.delete("/subjects/:id", async (c) => {
+  if (!c.var.admin) return c.json({ error: "forbidden" }, 403);
+  const res = await c.env.DB.prepare("DELETE FROM subjects WHERE id = ?").bind(c.req.param("id")).run();
+  return res.meta.changes ? c.body(null, 204) : notFound(c);
+});
+
 // Page d'une matière : toutes ses cartes, la recherche se fait côté client
 api.get("/subjects/:id/cards", async (c) => {
   const [, { results }] = await c.env.DB.batch<Record<string, unknown>>([

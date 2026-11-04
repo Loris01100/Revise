@@ -517,6 +517,12 @@ dialog.card-form .actions {
   border-top: 1px solid var(--rule);
   background: var(--paper);
 }
+/* Suppression rangée à l'écart des boutons du formulaire */
+.drop-subject {
+  margin-right: auto;
+  color: var(--error);
+  font-weight: 400;
+}
 .confirm p {
   margin-top: -8px;
 }

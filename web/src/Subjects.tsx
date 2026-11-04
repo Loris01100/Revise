@@ -45,6 +45,8 @@ export default function Subjects(p: { id?: string }) {
 
   const [creating, setCreating] = createSignal(new URLSearchParams(location.search).has("nouvelle"));
   const [editing, setEditing] = createSignal<Card | "new" | null>(null);
+  const [renaming, setRenaming] = createSignal<Subject | null>(null);
+  const [dropping, setDropping] = createSignal<Subject | null>(null);
   const [deleting, setDeleting] = createSignal<Card | null>(null);
   // Sélection multiple pour supprimer d'un coup ; seules les cartes visibles comptent, un filtre ne cache rien de ce qui part
   const [picked, setPicked] = createSignal(new Set<string>());
@@ -166,7 +168,10 @@ export default function Subjects(p: { id?: string }) {
                     <mark>{s().name}</mark>
                   </h1>
                   <div class="inline">
-                    {/* Action rare : discrète, en tête ici, donc en dernier sur téléphone (ordre inversé) */}
+                    {/* Actions rares : discrètes, en tête ici, donc en dernier sur téléphone (ordre inversé) */}
+                    <button class="btn quiet" onClick={() => (setToast(null), setRenaming(s()))}>
+                      Modifier la matière
+                    </button>
                     <Show when={s().cards > 0}>
                       <button class="btn quiet" onClick={() => exportCards(s())}>
                         Exporter
@@ -357,12 +362,56 @@ export default function Subjects(p: { id?: string }) {
             setCreating(false);
             if (location.search) history.replaceState(null, "", location.pathname);
           }}
-          onCreated={async (id) => {
+          onSaved={async (id) => {
             setCreating(false);
             await reloadSubjects();
             go(`/matieres/${id}`);
           }}
         />
+      </Show>
+
+      <Show when={renaming()}>
+        {(s) => (
+          <SubjectForm
+            subject={s()}
+            used={list().map((x) => x.color)}
+            onClose={() => setRenaming(null)}
+            onSaved={async () => {
+              setRenaming(null);
+              await reloadSubjects();
+              setToast({ text: "Matière enregistrée." });
+            }}
+            onDelete={me()?.admin ? () => (setRenaming(null), setDropping(s())) : undefined}
+          />
+        )}
+      </Show>
+
+      <Show when={dropping()}>
+        {(s) => (
+          <Confirm
+            title={`Supprimer « ${short(s().name)} » ?`}
+            text={(() => {
+              const n = cards.latest?.length ?? 0;
+              return n ? `${one(n) ? "Sa carte" : `Ses ${n} cartes`} et leur historique de révision seront perdus.` : undefined;
+            })()}
+            yes="Supprimer la matière"
+            no="Garder"
+            onNo={() => setDropping(null)}
+            onYes={async () => {
+              setDropping(null);
+              setToast(null);
+              try {
+                await api("DELETE", `/subjects/${s().id}`);
+                setToast({ text: "Matière supprimée." });
+                go("/matieres");
+              } catch {
+                setToast({ text: "La matière n'a pas été supprimée. Réessaie." });
+              }
+              await reloadSubjects();
+              document.querySelector<HTMLElement>(".side .row[tabindex='0']")?.focus();
+            }}
+          />
+        )}
       </Show>
 
       <Show when={deleting()}>
@@ -423,9 +472,11 @@ export default function Subjects(p: { id?: string }) {
 
 const short = (s: string) => (s.length > 40 ? `${s.slice(0, 40).trimEnd()}…` : s);
 
-function SubjectForm(p: { used: (Color | null)[]; onClose: () => void; onCreated: (id: string) => void }) {
-  const [name, setName] = createSignal("");
-  const [color, setColor] = createSignal<Color>(COLORS.find(([c]) => !p.used.includes(c))?.[0] ?? "yellow");
+// Sans `subject` : création. Avec : modification, et suppression si `onDelete` est fourni (admin)
+function SubjectForm(p: { subject?: Subject; used: (Color | null)[]; onClose: () => void; onSaved: (id: string) => void; onDelete?: () => void }) {
+  const s = p.subject;
+  const [name, setName] = createSignal(s?.name ?? "");
+  const [color, setColor] = createSignal<Color>(s?.color ?? COLORS.find(([c]) => !p.used.includes(c))?.[0] ?? "yellow");
   const [error, setError] = createSignal("");
   let input!: HTMLInputElement;
   async function submit(e: SubmitEvent) {
@@ -435,16 +486,16 @@ function SubjectForm(p: { used: (Color | null)[]; onClose: () => void; onCreated
       return input.focus();
     }
     try {
-      const { id } = await api<{ id: string }>("POST", "/subjects", { name: name().trim(), color: color() });
-      p.onCreated(id);
+      const b = { name: name().trim(), color: color() };
+      p.onSaved(s ? (await api("PATCH", `/subjects/${s.id}`, b), s.id) : (await api<{ id: string }>("POST", "/subjects", b)).id);
     } catch {
-      setError("La matière n'a pas été créée. Réessaie.");
+      setError(s ? "La matière n'a pas été enregistrée. Réessaie." : "La matière n'a pas été créée. Réessaie.");
     }
   }
   return (
-    <Dialog label="Nouvelle matière" onClose={p.onClose}>
+    <Dialog label={s ? "Modifier la matière" : "Nouvelle matière"} onClose={p.onClose}>
       <form onSubmit={submit} novalidate>
-        <h2>Nouvelle matière</h2>
+        <h2>{s ? "Modifier la matière" : "Nouvelle matière"}</h2>
         <label for="sname" class="label">
           Nom
         </label>
@@ -474,10 +525,15 @@ function SubjectForm(p: { used: (Color | null)[]; onClose: () => void; onCreated
           </For>
         </fieldset>
         <div class="actions">
+          <Show when={p.onDelete}>
+            <button type="button" class="link drop-subject" onClick={() => p.onDelete!()}>
+              Supprimer la matière
+            </button>
+          </Show>
           <button type="button" class="btn" onClick={p.onClose}>
             Annuler
           </button>
-          <button class="btn primary">Créer la matière</button>
+          <button class="btn primary">{s ? "Enregistrer" : "Créer la matière"}</button>
         </div>
       </form>
     </Dialog>
