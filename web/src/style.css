@@ -1206,11 +1206,18 @@ p.empty {
 .steps h2 + .muted {
   max-width: 60ch;
 }
+.prompt-sum {
+  margin-top: 4px;
+}
+/* Cible de 44px sans décaler la ligne */
+.prompt-sum .link {
+  padding-block: 10px;
+}
 .prompt-opts {
   display: flex;
   flex-wrap: wrap;
   gap: 20px 40px;
-  margin-bottom: 8px;
+  margin-top: 8px;
 }
 .field.count {
   width: 7em;

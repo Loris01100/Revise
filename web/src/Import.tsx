@@ -45,6 +45,12 @@ export default function Import(p: { id: string }) {
   const [copyFailed, setCopyFailed] = createSignal(false);
   const [typeError, setTypeError] = createSignal(false);
   const [shown, setShown] = createSignal(false);
+  const [tuning, setTuning] = createSignal(false);
+  const tune = () => {
+    setTypeError(false);
+    setTuning(!tuning());
+    if (tuning()) queueMicrotask(() => document.getElementById("count")?.focus());
+  };
   let details!: HTMLDetailsElement;
   let promptText!: HTMLTextAreaElement;
   // L'ordre des types suit celui de l'éditeur, pas celui des clics
@@ -175,57 +181,66 @@ export default function Import(p: { id: string }) {
                     <span class="muted"> · copié</span>
                   </Show>
                 </h2>
-                <div class="prompt-opts">
-                  <div>
-                    <label for="count" class="label">
-                      Nombre de cartes
-                    </label>
-                    <input
-                      id="count"
-                      class="field count"
-                      type="number"
-                      min={5}
-                      max={60}
-                      value={count()}
-                      onChange={(e) => {
-                        const n = Math.round(+e.currentTarget.value) || 20;
-                        setSettings({ importCount: Math.min(60, Math.max(5, n)) });
-                        e.currentTarget.value = String(count());
-                      }}
-                    />
-                  </div>
-                  <fieldset aria-describedby="types-err">
-                    <legend class="label">Types</legend>
-                    <div class="types">
-                      <For each={Object.entries(TYPES)}>
-                        {([k, label]) => (
-                          <label class="check">
-                            <input
-                              type="checkbox"
-                              name="types"
-                              value={k}
-                              checked={types().includes(k as CardType)}
-                              onChange={(e) => {
-                                toggle(k as CardType, e.currentTarget.checked);
-                                e.currentTarget.checked = types().includes(k as CardType);
-                              }}
-                            />
-                            {label}
-                          </label>
-                        )}
-                      </For>
-                    </div>
-                    <p id="types-err" class="error-text">
-                      {typeError() ? "Garde au moins un type." : ""}
-                    </p>
-                  </fieldset>
-                </div>
                 <button class="btn" classList={{ primary: !sent() && !text() }} onClick={copy} aria-describedby="copy-err">
                   {copied() ? "Prompt copié" : sent() ? "Copier à nouveau" : "Copier le prompt"}
                 </button>
                 <p id="copy-err" class="hint">
                   {copyFailed() ? "Copie le texte sélectionné." : ""}
                 </p>
+                {/* Les réglages par défaut conviennent presque toujours : repliés en une ligne qui les dit */}
+                <p class="prompt-sum muted">
+                  {cardsLabel(count())} · {types().length} {one(types().length) ? "type" : "types"} ·{" "}
+                  <button class="link" aria-expanded={tuning()} aria-controls="prompt-opts" onClick={tune}>
+                    {tuning() ? "Fermer" : "Changer"}
+                  </button>
+                </p>
+                <Show when={tuning()}>
+                  <div id="prompt-opts" class="prompt-opts">
+                    <div>
+                      <label for="count" class="label">
+                        Nombre de cartes
+                      </label>
+                      <input
+                        id="count"
+                        class="field count"
+                        type="number"
+                        min={5}
+                        max={60}
+                        value={count()}
+                        onChange={(e) => {
+                          const n = Math.round(+e.currentTarget.value) || 20;
+                          setSettings({ importCount: Math.min(60, Math.max(5, n)) });
+                          e.currentTarget.value = String(count());
+                        }}
+                      />
+                    </div>
+                    <fieldset aria-describedby="types-err">
+                      <legend class="label">Types</legend>
+                      <div class="types">
+                        <For each={Object.entries(TYPES)}>
+                          {([k, label]) => (
+                            <label class="check">
+                              <input
+                                type="checkbox"
+                                name="types"
+                                value={k}
+                                checked={types().includes(k as CardType)}
+                                onChange={(e) => {
+                                  toggle(k as CardType, e.currentTarget.checked);
+                                  e.currentTarget.checked = types().includes(k as CardType);
+                                }}
+                              />
+                              {label}
+                            </label>
+                          )}
+                        </For>
+                      </div>
+                      <p id="types-err" class="error-text">
+                        {typeError() ? "Garde au moins un type." : ""}
+                      </p>
+                    </fieldset>
+                  </div>
+                </Show>
                 <details ref={details} class="prompt" onToggle={(e) => setShown(e.currentTarget.open)}>
                   <summary>{shown() ? "Masquer le prompt" : "Voir le prompt"}</summary>
                   <textarea ref={promptText} id="prompt-text" class="field" readonly rows={12} value={buildPrompt(count(), types())} aria-label="Prompt" />
