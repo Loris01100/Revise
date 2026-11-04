@@ -291,6 +291,9 @@ export const focusFree = (el: HTMLElement) =>
 
 // --- Annonces au lecteur d'écran ---
 
+/** Tronque à 70 caractères, pour nommer une carte par sa question. */
+export const short = (s: string) => (s.length > 70 ? `${s.slice(0, 70).trimEnd()}…` : s);
+
 export const [message, setMessage] = createSignal("");
 export function announce(text: string) {
   setMessage("");

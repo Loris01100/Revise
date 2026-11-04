@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
 import { api, type Card, type Subject } from "./api";
 import { CardForm } from "./Subjects";
-import { Cloze, Icon, Link, Rich, TYPES, announce, cardsLabel, go, hl, one, plain, start } from "./ui";
+import { Cloze, Icon, Link, Rich, TYPES, announce, cardsLabel, go, hl, one, plain, short, start } from "./ui";
 
 const part = (n: number, word: string) => `${n} ${word}${one(n) ? "" : "s"}`;
 
@@ -10,11 +10,23 @@ export default function Review(p: { id: string }) {
   const [subjects] = createResource(() => api<Subject[]>("GET", "/subjects"));
   const subject = () => (subjects.error ? undefined : subjects()?.find((s) => s.id === p.id));
   // La liste est figée à l'ouverture : l'ordre du lot, celui du cours
-  const [queue, { refetch }] = createResource(async () => {
+  const [queue, { mutate, refetch }] = createResource(async () => {
     const all = await api<Card[]>("GET", `/subjects/${p.id}/cards`);
     return all.filter((c) => c.status === "draft");
   });
   createEffect(() => queue.state === "ready" && queue().length === 0 && go(back));
+  // Un Réessayer qui échoue encore laisse le même écran : il faut le dire
+  const [loadFails, setLoadFails] = createSignal(0);
+  createEffect(
+    on(
+      () => queue.error,
+      (e) => {
+        if (!e) return;
+        setLoadFails(loadFails() + 1);
+        if (loadFails() > 1) announce("Toujours impossible de charger les cartes.");
+      },
+    ),
+  );
 
   const [i, setI] = createSignal(0);
   const [accepted, setAccepted] = createSignal(0);
@@ -27,7 +39,8 @@ export default function Review(p: { id: string }) {
   // Acceptation et suppression différées jusqu'à l'action suivante : « Annuler » n'a rien à défaire côté serveur.
   // Un échec ou un onglet fermé laisse la carte en brouillon, elle reviendra à la prochaine relecture.
   const [pending, setPending] = createSignal<{ card: Card; act: "accept" | "delete" } | null>(null);
-  const [lost, setLost] = createSignal(false);
+  // Acceptations échouées : gardées jusqu'à Réessayer, qui remet les cartes en fin de file
+  const [lost, setLost] = createSignal<Card[]>([]);
   const commit = async () => {
     const t = pending();
     setPending(null);
@@ -35,7 +48,7 @@ export default function Review(p: { id: string }) {
     if (t?.act === "accept")
       await api("PATCH", `/cards/${t.card.id}`, { status: "active" }, true).catch(() => {
         setAccepted(accepted() - 1);
-        setLost(true);
+        setLost([...lost(), t.card]);
       });
   };
   onCleanup(commit);
@@ -43,19 +56,21 @@ export default function Review(p: { id: string }) {
   onCleanup(() => removeEventListener("pagehide", commit));
 
   const next = () => setI(i() + 1);
-  const relues = () => `${cardsLabel(cards().length)} ${one(cards().length) ? "relue" : "relues"}`;
+  const retryLost = () => (mutate([...cards(), ...lost()]), setLost([]));
+  // Une carte remise en file n'est comptée qu'une fois
+  const total = () => new Set(cards().map((c) => c.id)).size;
+  const relues = () => `${cardsLabel(total())} ${one(total()) ? "relue" : "relues"}`;
   const summary = () =>
     accepted()
       ? `${relues()} : ${part(accepted(), "acceptée")}${deleted() ? `, ${part(deleted(), "supprimée")}` : ""}.`
       : `${relues()}, aucune acceptée.`;
   function act(a: "accept" | "delete") {
     void commit();
-    setLost(false);
     setPending({ card: card(), act: a });
     a === "accept" ? setAccepted(accepted() + 1) : setDeleted(deleted() + 1);
     next();
   }
-  const edit = () => (void commit(), setLost(false), setEditing(true));
+  const edit = () => (void commit(), setEditing(true));
   function undo() {
     const a = pending()?.act;
     setPending(null);
@@ -68,7 +83,7 @@ export default function Review(p: { id: string }) {
   let endBtn: HTMLButtonElement | undefined;
   let shownAt = 0;
   createEffect(
-    on([i, () => queue.state], () => {
+    on([i, () => queue.state, () => cards().length], () => {
       if (queue.state !== "ready") return;
       shownAt = performance.now();
       queueMicrotask(() => (done() ? endBtn : acceptBtn)?.focus({ preventScroll: true }));
@@ -113,12 +128,22 @@ export default function Review(p: { id: string }) {
   const Status = () => (
     <p class="review-status" role="status">
       <Show when={pending()}>
-        {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}
+        {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}{" "}
         <button class="link" onClick={undo}>
           Annuler
         </button>
       </Show>
     </p>
+  );
+  const Lost = () => (
+    <Show when={lost().length}>
+      <p class="notice error" role="alert">
+        {one(lost().length) ? `« ${short(plain(lost()[0].question))} » n'a pas été acceptée.` : `${lost().length} cartes n'ont pas été acceptées.`}{" "}
+        <button class="link" onClick={retryLost}>
+          Réessayer
+        </button>
+      </p>
+    </Show>
   );
   return (
     <div class="page review" style={hl(subject()?.color)}>
@@ -143,10 +168,12 @@ export default function Review(p: { id: string }) {
         <Match when={queue.error}>
           <main class="col end">
             <h1 class="lead-title">Les cartes n'ont pas pu être chargées.</h1>
-            <p class="muted">Vérifie ta connexion, puis réessaie.</p>
+            <p class="muted">
+              {loadFails() > 1 ? "Toujours impossible de les charger. Vérifie ta connexion, puis réessaie dans un moment." : "Vérifie ta connexion, puis réessaie."}
+            </p>
             <div class="stack">
               <button class="btn primary lg block" onClick={() => refetch()}>
-                Réessayer
+                {queue.loading ? "Chargement…" : "Réessayer"}
               </button>
               <button class="btn block" onClick={() => go(back)}>
                 Retour à la matière
@@ -158,6 +185,7 @@ export default function Review(p: { id: string }) {
           <main class="col end">
             <h1 class="lead-title">{summary()}</h1>
             <Status />
+            <Lost />
             <div class="stack">
               <Show
                 when={accepted()}
@@ -226,11 +254,7 @@ export default function Review(p: { id: string }) {
 
               <div class="grades-dock">
                 <Status />
-                <Show when={lost()}>
-                  <p class="notice error" role="alert">
-                    La carte précédente n'a pas été acceptée. Elle reviendra à la prochaine relecture.
-                  </p>
-                </Show>
+                <Lost />
                 <div class="review-acts">
                   <button ref={acceptBtn} class="btn primary lg" onClick={() => act("accept")} aria-keyshortcuts="Enter">
                     Accepter

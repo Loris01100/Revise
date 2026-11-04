@@ -1,7 +1,7 @@
 import { For, Show, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import { Expired, Failed, api, type CardType, type Subject } from "./api";
 import { buildPrompt } from "./prompt";
-import { Icon, Link, TYPES, announce, cardsLabel, go, one, plain, setSettings, settings } from "./ui";
+import { Icon, Link, TYPES, announce, cardsLabel, go, message, one, plain, setMessage, setSettings, settings, short } from "./ui";
 
 type Report = { cards: unknown[]; rejected: { index: number; question: string | null; reason: string }[] };
 const DUPLICATE = "question déjà présente dans la matière";
@@ -20,7 +20,14 @@ function problem(e: unknown, text: string) {
   return "Claude a renvoyé un format illisible. Demande-lui de renvoyer uniquement le bloc JSON.";
 }
 
-const short = (s: string) => (s.length > 70 ? `${s.slice(0, 70).trimEnd()}…` : s);
+// Le bandeau ne garde pas une annonce périmée, sauf si une autre l'a remplacée
+const quiet = (text: string) => message() === text && setMessage("");
+const headline = (r: Report) =>
+  r.cards.length
+    ? `${cardsLabel(r.cards.length)} à relire.`
+    : r.rejected.some((x) => x.reason !== DUPLICATE)
+      ? "Aucune carte n'a pu être importée."
+      : "Aucune nouvelle carte : toutes étaient déjà dans la matière.";
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function Import(p: { id: string }) {
@@ -53,7 +60,7 @@ export default function Import(p: { id: string }) {
       setCopied(true);
       setSent(true);
       announce("Prompt copié.");
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => (setCopied(false), quiet("Prompt copié.")), 3000);
     } catch {
       setCopyFailed(true);
       details.open = true;
@@ -92,7 +99,9 @@ export default function Import(p: { id: string }) {
     if (!text().trim()) return fail("Colle la réponse de Claude.");
     setBusy(true);
     try {
-      setReport(await api<Report>("POST", "/imports", { subject_id: p.id, text: text() }));
+      const r = await api<Report>("POST", "/imports", { subject_id: p.id, text: text() });
+      setReport(r);
+      announce(headline(r));
       queueMicrotask(() => primary?.focus());
     } catch (e) {
       if (e instanceof Expired) return;
@@ -122,7 +131,7 @@ export default function Import(p: { id: string }) {
       setReasonsFailed(false);
       setReasonsCopied(true);
       announce("Raisons copiées.");
-      setTimeout(() => setReasonsCopied(false), 3000);
+      setTimeout(() => (setReasonsCopied(false), quiet("Raisons copiées.")), 3000);
     } catch {
       setReasonsFailed(true);
     }
@@ -285,8 +294,8 @@ export default function Import(p: { id: string }) {
                   when={n > 0}
                   fallback={
                     <>
-                      <h2 id="report-title" class="lead-title" role="status">
-                        {others.length ? "Aucune carte n'a pu être importée." : "Aucune nouvelle carte : toutes étaient déjà dans la matière."}
+                      <h2 id="report-title" class="lead-title">
+                        {headline(r())}
                       </h2>
                       <Show
                         when={others.length}
@@ -303,8 +312,8 @@ export default function Import(p: { id: string }) {
                     </>
                   }
                 >
-                  <h2 id="report-title" class="lead-title" role="status">
-                    {cardsLabel(n)} à relire.
+                  <h2 id="report-title" class="lead-title">
+                    {headline(r())}
                   </h2>
                   <p class="muted">{one(n) ? "Elle entrera en révision une fois acceptée." : "Elles entreront en révision une fois acceptées."}</p>
                   <button ref={(el) => (primary = el)} class="btn primary lg block" onClick={() => go(`/matieres/${p.id}/relecture`)}>
