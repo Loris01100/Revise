@@ -248,7 +248,7 @@ Vérification du rendu :
   - File gardée de 60 cartes (`GET /api/queue`), préparée à chaque accueil en ligne avec ses dessins et sa coloration ; session hors ligne enregistrée au retour (`POST /sessions` avec `id`, `started_at` ; `/end` avec `ended_at`)
   - [x] `/transpose` + `/impeccable adapt` : `docs/design/adaptation-revise-mobile.md` — pas de clavier ouvert d'office, retour Android = pause, survol réservé à la souris, cibles de 44 px
   - [x] `/fortify` : `docs/design/states-offline.md` — délais réseau, stockage plein, version précédente gardée après déploiement
-  - [ ] Vérifier l'installation sur le vrai domaine : manifeste et icônes passent par Access (`crossorigin="use-credentials"`) ; si Chrome ne propose pas l'installation, ajouter une règle Bypass Access pour `/manifest.webmanifest` et `/icon-*.png`
+  - [x] Vérifier l'installation sur le vrai domaine : manifeste et icônes passent par Access (`crossorigin="use-credentials"`) ; si Chrome ne propose pas l'installation, ajouter une règle Bypass Access pour `/manifest.webmanifest` et `/icon-*.png`
 - [x] Export des cartes : bouton « Exporter » d'une matière, fichier JSON au format de l'import (brouillons exclus, dessins cités par leur id)
 - [x] Plusieurs personnes : contenu partagé (matières, cartes, dessins), progression propre à chacun (`card_state`, `reviews`, `sessions`, `parked_thoughts` par `user_id`) — migration `0003_users.sql`
   - Inviter : Zero Trust → Access → Applications → Revise → Policies → ajouter l'e-mail à la règle Allow
@@ -257,7 +257,7 @@ Vérification du rendu :
 
 ## Checklist sécurité finale
 
-- [ ] Access actif, une seule règle Allow (e-mails invités uniquement)
-- [ ] JWT revérifié dans le Worker sur toutes les routes `/api/*`
+- [x] Access actif, une seule règle Allow (e-mails invités uniquement)
+- [x] JWT revérifié dans le Worker sur toutes les routes `/api/*` (`app.use("/api/*", requireUser)`, `run_worker_first` ; sans session : 302 vers Access)
 - [x] `workers_dev = false` et `preview_urls = false`
-- [ ] Garde-fou import : 1 Mo de texte collé, validation par le cœur Rust
+- [x] Garde-fou import : 1 Mo de texte collé (`bodyLimit`, 413), validation par le cœur Rust (`validate_cards`)
