@@ -1115,7 +1115,7 @@ dialog.draw .actions {
   min-width: 0;
   font-size: clamp(26px, 1.4vw + 18px, 34px);
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .filters {
   display: flex;
