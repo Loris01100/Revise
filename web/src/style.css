@@ -1324,7 +1324,7 @@ p.empty {
 }
 .review-acts {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 8px;
 }
 .review-status {
@@ -1412,7 +1412,7 @@ p.empty {
 }
 @media (max-width: 600px) {
   .review-acts {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
   .review-acts .primary {
     grid-column: 1 / -1;

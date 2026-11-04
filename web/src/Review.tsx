@@ -29,16 +29,19 @@ export default function Review(p: { id: string }) {
   );
 
   const [i, setI] = createSignal(0);
-  const [accepted, setAccepted] = createSignal(0);
-  const [deleted, setDeleted] = createSignal(0);
+  type Act = "accept" | "delete" | "later";
+  const [count, setCount] = createSignal({ accept: 0, delete: 0, later: 0 });
+  const bump = (a: Act, n: number) => setCount({ ...count(), [a]: count()[a] + n });
+  const accepted = () => count().accept;
   const [editing, setEditing] = createSignal(false);
   const cards = () => (queue.state === "ready" ? queue() : []);
   const card = () => cards()[i()];
   const done = () => queue.state === "ready" && cards().length > 0 && i() >= cards().length;
 
+  // « Plus tard » ne touche pas le serveur : la carte reste en brouillon.
   // Acceptation et suppression différées jusqu'à l'action suivante : « Annuler » n'a rien à défaire côté serveur.
   // Un échec ou un onglet fermé laisse la carte en brouillon, elle reviendra à la prochaine relecture.
-  const [pending, setPending] = createSignal<{ card: Card; act: "accept" | "delete" } | null>(null);
+  const [pending, setPending] = createSignal<{ card: Card; act: Act } | null>(null);
   // Acceptations échouées : gardées jusqu'à Réessayer, qui remet les cartes en fin de file
   const [lost, setLost] = createSignal<Card[]>([]);
   const commit = async () => {
@@ -47,7 +50,7 @@ export default function Review(p: { id: string }) {
     if (t?.act === "delete") void api("DELETE", `/cards/${t.card.id}`, undefined, true).catch(() => {});
     if (t?.act === "accept")
       await api("PATCH", `/cards/${t.card.id}`, { status: "active" }, true).catch(() => {
-        setAccepted(accepted() - 1);
+        bump("accept", -1);
         setLost([...lost(), t.card]);
       });
   };
@@ -60,21 +63,26 @@ export default function Review(p: { id: string }) {
   // Une carte remise en file n'est comptée qu'une fois
   const total = () => new Set(cards().map((c) => c.id)).size;
   const relues = () => `${cardsLabel(total())} ${one(total()) ? "relue" : "relues"}`;
-  const summary = () =>
-    accepted()
-      ? `${relues()} : ${part(accepted(), "acceptée")}${deleted() ? `, ${part(deleted(), "supprimée")}` : ""}.`
-      : `${relues()}, aucune acceptée.`;
-  function act(a: "accept" | "delete") {
+  const summary = () => {
+    const { accept, delete: del, later } = count();
+    const rest = [del && part(del, "supprimée"), later && `${later} pour plus tard`].filter(Boolean).join(", ");
+    return accept
+      ? `${relues()} : ${part(accept, "acceptée")}${rest ? `, ${rest}` : ""}.`
+      : `${relues()}, aucune acceptée${rest ? ` (${rest})` : ""}.`;
+  };
+  function act(a: Act) {
     void commit();
     setPending({ card: card(), act: a });
-    a === "accept" ? setAccepted(accepted() + 1) : setDeleted(deleted() + 1);
+    bump(a, 1);
     next();
   }
-  const edit = () => (void commit(), setEditing(true));
+  // L'action en attente reste annulable tant que la modification n'est pas enregistrée
+  const edit = () => setEditing(true);
   function undo() {
-    const a = pending()?.act;
+    const t = pending();
+    if (!t) return;
     setPending(null);
-    a === "accept" ? setAccepted(accepted() - 1) : setDeleted(deleted() - 1);
+    bump(t.act, -1);
     setI(i() - 1);
   }
 
@@ -99,13 +107,16 @@ export default function Review(p: { id: string }) {
       if (e.key === "Escape") go(back);
       // Entrée tenue ou frappée sur l'élan de la carte précédente : la nouvelle carte n'a pas encore été lue
       if (e.key === "Enter" && (e.repeat || performance.now() - shownAt < 400)) e.preventDefault();
-      // M et S : les deux autres gestes de la carte, sans passer par Tab
+      // M, T et S : les autres gestes de la carte, sans passer par Tab ; Z annule, aussi sur l'écran de fin
       const t = e.target as HTMLElement;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || t.matches("input, textarea, select")) return;
+      if (e.key.toLowerCase() === "z" && pending()) return (e.preventDefault(), undo());
       // Même garde qu'Entrée : un double S supprimerait deux cartes, dont une sans Annuler
-      if (!card() || e.repeat || performance.now() - shownAt < 400 || e.ctrlKey || e.metaKey || e.altKey || t.matches("input, textarea, select")) return;
+      if (!card() || performance.now() - shownAt < 400) return;
       const k = e.key.toLowerCase();
       if (k === "m") edit();
       else if (k === "s") act("delete");
+      else if (k === "t") act("later");
       else return;
       e.preventDefault();
     };
@@ -128,9 +139,10 @@ export default function Review(p: { id: string }) {
   const Status = () => (
     <p class="review-status" role="status">
       <Show when={pending()}>
-        {pending()?.act === "accept" ? "Carte acceptée." : "Carte supprimée."}{" "}
-        <button class="link" onClick={undo}>
+        {{ accept: "Carte acceptée.", delete: "Carte supprimée.", later: "Carte gardée pour plus tard." }[pending()!.act]}{" "}
+        <button class="link" onClick={undo} aria-keyshortcuts="Z">
           Annuler
+          <span class="key" aria-hidden="true"> · Z</span>
         </button>
       </Show>
     </p>
@@ -268,6 +280,12 @@ export default function Review(p: { id: string }) {
                       M
                     </span>
                   </button>
+                  <button class="btn lg" onClick={() => act("later")} aria-keyshortcuts="T">
+                    Plus tard
+                    <span class="key" aria-hidden="true">
+                      T
+                    </span>
+                  </button>
                   <button class="btn lg" onClick={() => act("delete")} aria-keyshortcuts="S">
                     Supprimer
                     <span class="key" aria-hidden="true">
@@ -285,7 +303,7 @@ export default function Review(p: { id: string }) {
                       subject={s()}
                       card={c()}
                       accept
-                      onSaved={() => ((saved = true), setAccepted(accepted() + 1))}
+                      onSaved={() => (void commit(), (saved = true), bump("accept", 1))}
                       onClose={() => {
                         setEditing(false);
                         if (saved) next();
