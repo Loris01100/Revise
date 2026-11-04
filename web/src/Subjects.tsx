@@ -75,11 +75,20 @@ export default function Subjects(p: { id?: string }) {
     act(() => status(c, "suspended"), { text: "Carte suspendue.", undo: () => act(() => status(c, "active")) });
 
   const [failed, setFailed] = createSignal(false);
-  // Fichier au format de l'import : il se recolle tel quel dans une matière. Brouillons exclus, dessins cités par leur id
-  function exportCards(s: Subject) {
-    const out = (cards.latest ?? [])
-      .filter((c) => c.status !== "draft")
-      .map(({ type, question, answer, choices, explanation, source_page }) => ({ type, question, answer, choices, explanation, source_page: source_page ?? null }));
+  // Fichier au format de l'import : il se recolle tel quel dans une matière. Brouillons exclus.
+  // Chaque carte porte les formes de ses dessins (`drawings`, ignoré par le validateur) pour qu'ils suivent sur une autre installation
+  async function exportCards(s: Subject) {
+    const out = await Promise.all(
+      (cards.latest ?? [])
+        .filter((c) => c.status !== "draft")
+        .map(async ({ type, question, answer, choices, explanation, source_page }) => {
+          const ids = [...new Set([...`${question} ${answer} ${explanation ?? ""}`.matchAll(DRAWING)].map((m) => m[1]))];
+          // Dessin introuvable : la carte part quand même, elle l'affichera comme indisponible, comme ici
+          const found = await Promise.all(ids.map((id) => loadDrawing(id).then((sh) => [id, sh] as const, () => null)));
+          const drawings = Object.fromEntries(found.filter((d) => d !== null));
+          return { type, question, answer, choices, explanation, source_page: source_page ?? null, ...(ids.length && { drawings }) };
+        }),
+    );
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
     a.download = `${s.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "cartes"}.json`;

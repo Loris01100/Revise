@@ -149,7 +149,8 @@ api.delete("/cards/:id", async (c) => {
 
 // Import du JSON collé depuis Claude : les cartes valides arrivent en brouillon, à relire avant révision.
 // `active: true` : fichier d'export recollé tel quel, déjà relu, les cartes sont actives tout de suite (comme POST /cards)
-api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
+// 5 Mo : un export porte aussi les formes de ses dessins, plus lourdes que le texte des cartes
+api.post("/imports", bodyLimit({ maxSize: 5 * 1024 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
   const b = await body(c);
   if (!str(b.subject_id, 100)) return bad(c, "subject_id");
   if (typeof b.text !== "string") return bad(c, "text");
@@ -165,16 +166,33 @@ api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ 
   }
 
   const cards = report.cards.map((card) => ({ id: crypto.randomUUID(), ...card }));
+  const t = now();
   // Une seule requête quel que soit le nombre de cartes ; l'ordre du lot se retrouve dans rowid
-  if (cards.length)
-    await c.env.DB.prepare(
+  const stmts = [
+    c.env.DB.prepare(
       `INSERT INTO cards (id, subject_id, type, question, answer, choices, explanation, source_page, status, created_at)
        SELECT j.value ->> 'id', ?1, j.value ->> 'type', j.value ->> 'question', j.value ->> 'answer', json_extract(j.value, '$.choices'),
               j.value ->> 'explanation', j.value ->> 'source_page', ?4, ?2
        FROM json_each(?3) j ORDER BY j.key`,
-    )
-      .bind(b.subject_id, now(), JSON.stringify(cards), b.active === true ? "active" : "draft")
-      .run();
+    ).bind(b.subject_id, t, JSON.stringify(cards), b.active === true ? "active" : "draft"),
+  ];
+  // Un export porte les dessins de ses cartes : recréés sous le même id, les références `![dessin](id)` restent bonnes.
+  // Id déjà présent (même installation) : le dessin existant est gardé. Ceux des cartes écartées partent avec le nettoyage des orphelins
+  if (b.active === true) {
+    const drawings: [string, string][] = [];
+    try {
+      for (const card of JSON.parse(b.text))
+        for (const [id, shapes] of Object.entries(card?.drawings ?? {}))
+          if (DRAWING_ID.test(id) && shapesOk(shapes)) drawings.push([id, cleanShapes(shapes as any[])]);
+    } catch {}
+    if (drawings.length)
+      stmts.push(
+        c.env.DB.prepare(
+          "INSERT OR IGNORE INTO drawings (id, shapes, created_at) SELECT j.value ->> '$[0]', j.value ->> '$[1]', ? FROM json_each(?) j",
+        ).bind(t, JSON.stringify(drawings)),
+      );
+  }
+  if (cards.length) await c.env.DB.batch(stmts);
   return c.json({ cards, rejected: report.rejected }, 201);
 });
 
@@ -399,6 +417,11 @@ const shapesOk = (v: any) =>
   v.every((s) =>
     s?.t === "text" ? coords(s.p, 2, 2) && str(s.s, 100) : SHAPES.includes(s?.t) && coords(s.p, 4, s.t === "pen" ? 4000 : 4),
   );
+// Seuls les champs connus sont gardés
+const cleanShapes = (shapes: Record<string, any>[]) =>
+  JSON.stringify(shapes.map(({ t, p, s }) => (t === "text" ? { t, p, s: s.trim() } : { t, p })));
+// Même forme que les références `![dessin](id)` reconnues par l'interface
+const DRAWING_ID = /^[0-9a-f-]{36}$/;
 
 // Dessin que plus aucune carte ne cite (remplacé, carte supprimée) : effacé un jour après sa création,
 // le temps que la carte qui vient de l'insérer soit enregistrée
@@ -410,7 +433,7 @@ api.post("/drawings", bodyLimit({ maxSize: 512 * 1024, onError: (c) => c.json({ 
   if (!shapesOk(b.shapes)) return bad(c, "shapes");
   const id = crypto.randomUUID();
   const t = now();
-  const shapes = JSON.stringify(b.shapes.map(({ t, p, s }: Record<string, any>) => (t === "text" ? { t, p, s: s.trim() } : { t, p })));
+  const shapes = cleanShapes(b.shapes);
   await c.env.DB.batch([
     c.env.DB.prepare(
       `DELETE FROM drawings WHERE created_at < ? AND NOT EXISTS (
