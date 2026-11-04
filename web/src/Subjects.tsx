@@ -1,6 +1,6 @@
 import { For, Index, Show, createEffect, createResource, createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
-import { api, type Card, type CardType, type Color, type Subject } from "./api";
+import { Expired, Failed, api, type Card, type CardType, type Color, type Subject } from "./api";
 import { DrawDialog } from "./Draw";
 import { COLORS, Confirm, DRAWING, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, loadDrawing, one, plain, start, type Shape } from "./ui";
 
@@ -86,6 +86,39 @@ export default function Subjects(p: { id?: string }) {
     a.click();
     URL.revokeObjectURL(a.href);
     announce(one(out.length) ? "1 carte exportée." : `${out.length} cartes exportées.`);
+  }
+  // Recoller un export (sauvegarde, matière passée par quelqu'un) : déjà relu, les cartes sont actives d'emblée
+  let file!: HTMLInputElement;
+  async function importFile(s: Subject, f: File | undefined) {
+    file.value = "";
+    if (!f) return;
+    setToast(null);
+    try {
+      const r = await api<{ cards: unknown[]; rejected: { reason: string }[] }>("POST", "/imports", { subject_id: s.id, text: await f.text(), active: true });
+      const n = r.cards.length;
+      const dup = r.rejected.filter((x) => x.reason === "question déjà présente dans la matière").length;
+      const off = r.rejected.length - dup;
+      setToast({
+        text: [
+          one(n) ? "1 carte ajoutée." : `${n} cartes ajoutées.`,
+          dup && (one(dup) ? "1 était déjà dans la matière." : `${dup} étaient déjà dans la matière.`),
+          off && (one(off) ? "1 carte illisible écartée." : `${off} cartes illisibles écartées.`),
+        ]
+          .filter(Boolean)
+          .join(" "),
+      });
+    } catch (e) {
+      if (e instanceof Expired) return;
+      setToast({
+        text:
+          e instanceof Failed && e.status === 413
+            ? "Ce fichier est trop lourd pour un seul import."
+            : e instanceof Failed && e.status === 400
+              ? "Ce fichier n'est pas un export de cartes."
+              : "L'import n'a pas abouti. Réessaie.",
+      });
+    }
+    await reload();
   }
   async function revise(s: Subject) {
     setFailed(false);
@@ -177,6 +210,10 @@ export default function Subjects(p: { id?: string }) {
                         Exporter
                       </button>
                     </Show>
+                    <button class="btn quiet" onClick={() => file.click()}>
+                      Importer un fichier
+                    </button>
+                    <input ref={file} type="file" accept=".json,application/json" hidden onChange={(e) => importFile(s(), e.currentTarget.files?.[0])} />
                     <button class="btn" onClick={() => setEditing("new")}>
                       <Icon name="plus" />
                       Ajouter une carte

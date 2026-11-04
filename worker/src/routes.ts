@@ -147,7 +147,8 @@ api.delete("/cards/:id", async (c) => {
   return res.meta.changes ? c.body(null, 204) : notFound(c);
 });
 
-// Import du JSON collé depuis Claude : les cartes valides arrivent en brouillon, à relire avant révision
+// Import du JSON collé depuis Claude : les cartes valides arrivent en brouillon, à relire avant révision.
+// `active: true` : fichier d'export recollé tel quel, déjà relu, les cartes sont actives tout de suite (comme POST /cards)
 api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "too_large" }, 413) }), async (c) => {
   const b = await body(c);
   if (!str(b.subject_id, 100)) return bad(c, "subject_id");
@@ -169,10 +170,10 @@ api.post("/imports", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ 
     await c.env.DB.prepare(
       `INSERT INTO cards (id, subject_id, type, question, answer, choices, explanation, source_page, status, created_at)
        SELECT j.value ->> 'id', ?1, j.value ->> 'type', j.value ->> 'question', j.value ->> 'answer', json_extract(j.value, '$.choices'),
-              j.value ->> 'explanation', j.value ->> 'source_page', 'draft', ?2
+              j.value ->> 'explanation', j.value ->> 'source_page', ?4, ?2
        FROM json_each(?3) j ORDER BY j.key`,
     )
-      .bind(b.subject_id, now(), JSON.stringify(cards))
+      .bind(b.subject_id, now(), JSON.stringify(cards), b.active === true ? "active" : "draft")
       .run();
   return c.json({ cards, rejected: report.rejected }, 201);
 });
