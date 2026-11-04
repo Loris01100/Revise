@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch, createEffect, createResource, createSignal, on, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { api, enqueue, release, stalled, waitingReviews, type Parked, type Subject } from "./api";
+import { Offline, api, enqueue, release, stalled, waitingReviews, type Parked, type Subject } from "./api";
 import { Cloze, Dialog, Icon, Rich, announce, arrows, duration, focusFree, go, hl, one, plain, setRun, settings, start, type Run } from "./ui";
 
 const GRADES = [
@@ -48,6 +48,8 @@ export default function Session(p: { run: Run }) {
   let autoPaused = false;
 
   function focusCard() {
+    // Au doigt, le clavier virtuel cacherait la question : on touche le champ pour taper
+    if (!cur().revealed && card().type !== "mcq" && matchMedia("(pointer: coarse)").matches) return;
     const sel = cur().revealed ? ".grades [tabindex='0']" : card().type === "mcq" ? ".choices [tabindex='0']" : "#answer";
     document.querySelector<HTMLElement>(sel)?.focus();
   }
@@ -169,6 +171,19 @@ export default function Session(p: { run: Run }) {
   document.addEventListener("keydown", onKey);
   onCleanup(() => document.removeEventListener("keydown", onKey));
 
+  // Retour du téléphone : pause sur une carte (comme Échap), sortie au bilan ; jamais l'app fermée en pleine carte
+  history.pushState({ session: true }, "");
+  function onPop() {
+    if (view() === "end") return finish();
+    history.pushState({ session: true }, "");
+    openPause();
+  }
+  addEventListener("popstate", onPop);
+  onCleanup(() => {
+    removeEventListener("popstate", onPop);
+    if (history.state?.session) history.replaceState(null, "");
+  });
+
   // Fin : bilan local tout de suite, pensées non traitées dès que le serveur répond
   const [result, setResult] = createSignal({ done: 0, ms: 0 });
   const [parked, setParked] = createSignal<Parked[]>([]);
@@ -178,10 +193,11 @@ export default function Session(p: { run: Run }) {
     setView("end");
     if (replay) return;
     await release();
+    const fin = { ended_at: new Date().toISOString() };
     try {
-      setParked((await api<{ parked: Parked[] }>("POST", `/sessions/${sid}/end`)).parked);
+      setParked((await api<{ parked: Parked[] }>("POST", `/sessions/${sid}/end`, fin)).parked);
     } catch {
-      enqueue({ method: "POST", path: `/sessions/${sid}/end`, body: {} });
+      enqueue({ method: "POST", path: `/sessions/${sid}/end`, body: fin });
     }
   }
   function settle(t: Parked, done: boolean, el: HTMLElement) {
@@ -195,13 +211,13 @@ export default function Session(p: { run: Run }) {
     setParked(parked().filter((x) => x !== t));
     next?.focus();
   }
-  const [more, setMore] = createSignal<"idle" | "busy" | "failed">("idle");
+  const [more, setMore] = createSignal<"idle" | "busy" | "failed" | "offline">("idle");
   async function again() {
     setMore("busy");
     try {
       if (!(await start({ mode: "quick5" }))) finish();
-    } catch {
-      setMore("failed");
+    } catch (e) {
+      setMore(e instanceof Offline ? "offline" : "failed");
     }
   }
   // Mêmes cartes, même ordre, sans toucher au planning
@@ -567,6 +583,11 @@ export default function Session(p: { run: Run }) {
               <Show when={more() === "failed"}>
                 <p class="notice error" role="alert">
                   La session n'a pas pu démarrer.
+                </p>
+              </Show>
+              <Show when={more() === "offline"}>
+                <p class="notice" role="status">
+                  Pas de connexion, et plus de carte gardée sur cet appareil. Les suivantes arrivent avec la connexion.
                 </p>
               </Show>
             </div>

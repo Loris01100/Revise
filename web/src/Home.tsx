@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch, createResource, createSignal, onCleanup } from "solid-js";
-import { Expired, Offline, api, type Subject } from "./api";
-import { Link, focusFree, go, hl, nextCards, settings, start, type Mode } from "./ui";
+import { Expired, Offline, api, cached, kept, type Subject } from "./api";
+import { Link, focusFree, go, hl, nextCards, prepare, settings, start, type Mode } from "./ui";
 
 export default function Home() {
   const [offline, setOffline] = createSignal(false);
@@ -8,14 +8,19 @@ export default function Home() {
     try {
       const r = await api<Subject[]>("GET", "/subjects");
       setOffline(false);
+      // En ligne : la file gardée pour réviser sans réseau est remise à jour
+      if (!cached()) prepare().catch(() => {});
       return r;
     } catch (e) {
       setOffline(e instanceof Offline);
       throw e;
     }
   });
+  // Sans réseau, ou matières lues dans le cache de l'appareil
+  const away = () => offline() || cached();
+  const keptDue = () => kept().filter((c) => c.due <= new Date().toISOString()).length;
   // Hors connexion : nouvel essai toutes les 10 s, le bouton se réactive seul
-  const retry = setInterval(() => offline() && refetch(), 10_000);
+  const retry = setInterval(() => away() && refetch(), 10_000);
   const online = () => refetch();
   addEventListener("online", online);
   onCleanup(() => {
@@ -28,7 +33,7 @@ export default function Home() {
   const total = () => list().reduce((n, s) => n + s.cards, 0);
   const due = () => list().reduce((n, s) => n + s.due, 0);
   const next = () => list().map((s) => s.next_due).filter((d): d is string => !!d).sort()[0] ?? null;
-  const n = () => (loaded() ? Math.min(5, due()) : 5);
+  const n = () => (away() ? Math.min(5, keptDue()) : loaded() ? Math.min(5, due()) : 5);
 
   const [launching, setLaunching] = createSignal<Mode["mode"] | null>(null);
   const [failed, setFailed] = createSignal(false);
@@ -51,6 +56,10 @@ export default function Home() {
         <span class="wordmark">Revise</span>
         <nav aria-label="Principal" class="nav">
           <Link href="/matieres">Matières</Link>
+          <Link href="/statistiques">
+            <span class="wide-only">Statistiques</span>
+            <span class="narrow-only">Stats</span>
+          </Link>
           <Link href="/reglages">Réglages</Link>
         </nav>
       </header>
@@ -78,7 +87,7 @@ export default function Home() {
               Ajouter des cartes
             </button>
             <div class="secondary">
-              <button class="btn" onClick={timed} disabled={!!launching() || offline()}>
+              <button class="btn" onClick={timed} disabled={!!launching() || (away() && !kept().length)}>
                 {launching() === "timed" ? "Préparation…" : `Session de ${settings().minutes} min`}
               </button>
             </div>
@@ -89,7 +98,7 @@ export default function Home() {
               ref={focusFree}
               class="btn primary lg block"
               onClick={() => launch({ mode: "quick5" })}
-              disabled={!!launching() || offline()}
+              disabled={!!launching() || (away() && !keptDue())}
               aria-describedby="start-key"
             >
               <Show when={launching() === "quick5"} fallback={n() === 1 ? "Réviser 1 carte" : `Réviser ${n()} cartes`}>
@@ -99,7 +108,7 @@ export default function Home() {
             </button>
             <p id="start-key" class="key under">Entrée</p>
             <div class="secondary">
-              <button class="btn" onClick={timed} disabled={!!launching() || offline()}>
+              <button class="btn" onClick={timed} disabled={!!launching() || (away() && !kept().length)}>
                 {launching() === "timed" ? "Préparation…" : `Session de ${settings().minutes} min`}
               </button>
               <Link href="/reglages" class="link">
@@ -109,9 +118,11 @@ export default function Home() {
           </Match>
         </Switch>
 
-        <Show when={offline()}>
+        <Show when={away()}>
           <p class="notice" role="status">
-            Pas de connexion. Tes cartes reviennent dès qu'elle revient.
+            {kept().length
+              ? "Pas de connexion. Tu révises les cartes gardées sur cet appareil, tes notes partiront dès qu'elle revient."
+              : "Pas de connexion. Tes cartes reviennent dès qu'elle revient."}
           </p>
         </Show>
         <Show when={failed()}>

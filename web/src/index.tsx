@@ -9,6 +9,7 @@ import Import from "./Import";
 import Review from "./Review";
 import Session from "./Session";
 import Settings from "./Settings";
+import Stats from "./Stats";
 import Subjects from "./Subjects";
 import { announce, message, path, run } from "./ui";
 
@@ -19,7 +20,7 @@ function App() {
   const sub = () => path().match(/^\/matieres\/[^/]+\/(import|relecture)$/)?.[1];
   createEffect(() => {
     const p = path();
-    const name = run() ? "Session" : sub() === "import" ? "Import" : sub() ? "Relecture" : p.startsWith("/matieres") ? "Matières" : p === "/reglages" ? "Réglages" : "";
+    const name = run() ? "Session" : sub() === "import" ? "Import" : sub() ? "Relecture" : p.startsWith("/matieres") ? "Matières" : p === "/reglages" ? "Réglages" : p === "/statistiques" ? "Statistiques" : "";
     document.title = name ? `${name} · Revise` : "Revise";
   });
 
@@ -47,6 +48,9 @@ function App() {
             <Match when={path().startsWith("/matieres")}>
               <Subjects id={subject()} />
             </Match>
+            <Match when={path() === "/statistiques"}>
+              <Stats />
+            </Match>
             <Match when={path() === "/reglages"}>
               <Settings />
             </Match>
@@ -63,3 +67,5 @@ function App() {
 }
 
 render(() => <App />, document.getElementById("root")!);
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js");

@@ -29,9 +29,12 @@ export class Failed extends Error {
 
 /** Accès Cloudflare expiré : Access répond par une redirection vers sa page de connexion. */
 export const [expired, setExpired] = createSignal(false);
+/** La dernière lecture vient du cache de l'appareil (service worker), pas du réseau. */
+export const [cached, setCached] = createSignal(false);
 
-// `keepalive` : la requête survit à la fermeture de l'onglet (corps limité à 64 Ko)
-export async function api<T = void>(method: string, path: string, body?: unknown, keepalive?: boolean): Promise<T> {
+// `keepalive` : la requête survit à la fermeture de l'onglet (corps limité à 64 Ko).
+// `wait` : au-delà, réseau trop faible (métro, amphi) = hors ligne, plutôt qu'une attente sans fin
+export async function api<T = void>(method: string, path: string, body?: unknown, keepalive?: boolean, wait = 20_000): Promise<T> {
   let res: Response;
   try {
     res = await fetch("/api" + path, {
@@ -40,6 +43,7 @@ export async function api<T = void>(method: string, path: string, body?: unknown
       body: body === undefined ? undefined : JSON.stringify(body),
       redirect: "manual",
       keepalive,
+      signal: AbortSignal.timeout(wait),
     });
   } catch {
     throw new Offline();
@@ -48,6 +52,7 @@ export async function api<T = void>(method: string, path: string, body?: unknown
     setExpired(true);
     throw new Expired();
   }
+  setCached(res.headers.has("x-revise-offline"));
   if (!res.ok) throw new Failed(res.status, await res.json().catch(() => null));
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
@@ -69,6 +74,7 @@ function save(next: Job[]) {
 
 export function enqueue(job: Omit<Job, "id"> & { id?: string }) {
   const j = { ...job, id: job.id ?? crypto.randomUUID() };
+  if (j.path.endsWith("/reviews")) spend((j.body as { card_id: string }).card_id);
   const list = jobs();
   const i = list.findIndex((x) => x.id === j.id);
   save(i < 0 ? [...list, j] : list.map((x, k) => (k === i ? j : x)));
@@ -96,6 +102,21 @@ async function send() {
     save(jobs().filter((x) => x.id !== id));
   }
   setStalled(false);
+}
+
+// File de cartes gardée sur l'appareil pour réviser sans réseau ; une carte notée en sort
+export type KeptCard = Card & { due: string };
+const KKEY = "revise.offline";
+export const [kept, setKeptSignal] = createSignal<KeptCard[]>(JSON.parse(localStorage.getItem(KKEY) ?? "{}").cards ?? []);
+export function setKept(cards: KeptCard[]) {
+  // Stockage plein : la file reste en mémoire pour cette page, la note en cours passe avant
+  try {
+    localStorage.setItem(KKEY, JSON.stringify({ cards }));
+  } catch {}
+  setKeptSignal(cards);
+}
+function spend(id: string) {
+  if (kept().some((c) => c.id === id)) setKept(kept().filter((c) => c.id !== id));
 }
 
 setInterval(() => jobs().length && !expired() && flush(), 10_000);

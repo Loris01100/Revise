@@ -170,15 +170,8 @@ const closeIdle = (db: D1Database, user: string, t: string) => {
     .bind(user, new Date(Date.parse(t) - IDLE_MS).toISOString());
 };
 
-// Ouvre une session et renvoie sa file ; rien à réviser = pas de session créée
-api.post("/sessions", async (c) => {
-  const b = await body(c);
-  if (!MODES.includes(b.mode)) return bad(c, "mode");
-  if (b.mode === "subject" && !str(b.subject_id, 100)) return bad(c, "subject_id");
-  const planned = b.mode === "timed" ? b.planned_min : null;
-  if (planned !== null && !(Number.isInteger(planned) && planned >= 10 && planned <= 25)) return bad(c, "planned_min");
-
-  const t = now();
+// File d'une session : cartes dues (ou toutes, pour s'entraîner) composées par le cœur Rust
+async function queue(c: Context<App>, mode: string, subject: string | null, t: string) {
   // ponytail: jour UTC, le quota repart à 1 h ou 2 h à Paris ; passer au minuit local si ça gêne
   const day = t.slice(0, 10);
   const user = c.var.user;
@@ -190,21 +183,52 @@ api.post("/sessions", async (c) => {
               cs.due, cs.stability, cs.difficulty, cs.reps, cs.lapses, cs.state, cs.last_review
        FROM cards c JOIN card_state cs ON cs.card_id = c.id AND cs.user_id = ?2
        WHERE c.status = 'active' AND (?1 IS NULL OR c.subject_id = ?1)`,
-    ).bind(b.mode === "subject" ? b.subject_id : null, user),
+    ).bind(subject, user),
     // Cartes nouvelles introduites aujourd'hui = première note aujourd'hui
     c.env.DB.prepare(
       "SELECT COUNT(*) AS n FROM (SELECT card_id FROM reviews WHERE user_id = ? GROUP BY card_id HAVING MIN(reviewed_at) >= ?)",
     ).bind(user, day),
   ]);
   const quota = Math.max(0, NEW_PER_DAY - seen.results[0].n);
-  const ids: string[] = JSON.parse(compose(JSON.stringify(cands.results), b.mode === "quick5", quota, t));
-  if (!ids.length) return c.json({ id: null, cards: [] });
-
+  const ids: string[] = JSON.parse(compose(JSON.stringify(cands.results), mode === "quick5", quota, t));
   const byId = new Map(cands.results.map((r) => [r.id, r]));
-  const cards = ids.map((i) => {
-    const { id, subject_id, type, question, answer, choices, explanation } = byId.get(i)!;
-    return withChoices({ id, subject_id, type, question, answer, choices, explanation });
+  return ids.map((i) => {
+    const { id, subject_id, type, question, answer, choices, explanation, due } = byId.get(i)!;
+    return { ...withChoices({ id, subject_id, type, question, answer, choices, explanation }), due: iso(due)! };
   });
+}
+
+// File gardée sur l'appareil pour réviser sans réseau (session minutée, tronquée) ; aucune session ouverte
+const OFFLINE_CARDS = 60;
+api.get("/queue", async (c) => {
+  const t = now();
+  const cards = (await queue(c, "timed", null, t)).slice(0, OFFLINE_CARDS);
+  return c.json({ at: t, cards });
+});
+
+// Ouvre une session et renvoie sa file ; rien à réviser = pas de session créée.
+// Avec `id` et `started_at` : session déjà faite hors ligne sur la file gardée, seulement enregistrée (idempotent)
+api.post("/sessions", async (c) => {
+  const b = await body(c);
+  if (!MODES.includes(b.mode)) return bad(c, "mode");
+  if (b.mode === "subject" && !str(b.subject_id, 100)) return bad(c, "subject_id");
+  const planned = b.mode === "timed" ? b.planned_min : null;
+  if (planned !== null && !(Number.isInteger(planned) && planned >= 10 && planned <= 25)) return bad(c, "planned_min");
+  const user = c.var.user;
+
+  if (b.id != null) {
+    if (!str(b.id, 100)) return bad(c, "id");
+    if (Number.isNaN(Date.parse(b.started_at))) return bad(c, "started_at");
+    const at = new Date(Math.min(Date.parse(b.started_at), Date.now())).toISOString();
+    await c.env.DB.prepare("INSERT INTO sessions (id, user_id, mode, planned_min, started_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING")
+      .bind(b.id, user, b.mode, planned, at)
+      .run();
+    return c.json({ id: b.id, cards: [] }, 201);
+  }
+
+  const t = now();
+  const cards = (await queue(c, b.mode, b.mode === "subject" ? b.subject_id : null, t)).map(({ due, ...card }) => card);
+  if (!cards.length) return c.json({ id: null, cards: [] });
   const id = crypto.randomUUID();
   await c.env.DB.prepare("INSERT INTO sessions (id, user_id, mode, planned_min, started_at) VALUES (?, ?, ?, ?, ?)")
     .bind(id, user, b.mode, planned, t)
@@ -248,12 +272,16 @@ api.post("/sessions/:id/reviews", async (c) => {
   return c.body(null, 204);
 });
 
-// Clôture (idempotente) et bilan : cartes revues, horaires, pensées parquées non traitées
+// Clôture (idempotente) et bilan : cartes revues, horaires, pensées parquées non traitées.
+// `ended_at` : heure de fin donnée par l'appareil quand la clôture part en retard (file hors ligne)
 api.post("/sessions/:id/end", async (c) => {
+  const b = await body(c);
+  if (b.ended_at != null && Number.isNaN(Date.parse(b.ended_at))) return bad(c, "ended_at");
+  const end = new Date(Math.min(Date.parse(b.ended_at ?? now()), Date.now())).toISOString();
   const id = c.req.param("id");
   const user = c.var.user;
   const [, s, parked] = await c.env.DB.batch<Record<string, any>>([
-    c.env.DB.prepare("UPDATE sessions SET ended_at = COALESCE(ended_at, ?) WHERE id = ? AND user_id = ?").bind(now(), id, user),
+    c.env.DB.prepare("UPDATE sessions SET ended_at = COALESCE(ended_at, ?) WHERE id = ? AND user_id = ?").bind(end, id, user),
     c.env.DB.prepare("SELECT started_at, ended_at, cards_done FROM sessions WHERE id = ? AND user_id = ?").bind(id, user),
     c.env.DB.prepare("SELECT id, text, session_id, created_at FROM parked_thoughts WHERE done = 0 AND user_id = ? ORDER BY created_at").bind(user),
   ]);
@@ -280,6 +308,54 @@ api.patch("/parked/:id", async (c) => {
     .bind(+b.done, c.req.param("id"), c.var.user)
     .run();
   return res.meta.changes ? c.body(null, 204) : notFound(c);
+});
+
+// Statistiques de la personne connectée (docs/design/metrics-stats.md). `tz` : décalage local en minutes (Paris = 60 ou 120)
+const MASTERED_DAYS = 21;
+const NOTE_CAP_MS = 5 * 60_000;
+api.get("/stats", async (c) => {
+  const tz = Number(c.req.query("tz") ?? 0);
+  if (!(Number.isInteger(tz) && Math.abs(tz) <= 14 * 60)) return bad(c, "tz");
+  const mod = `${tz >= 0 ? "+" : ""}${tz} minutes`;
+  const t = now();
+  const ago = (d: number) => new Date(Date.parse(t) - d * 86_400_000).toISOString();
+  const user = c.var.user;
+  const db = c.env.DB;
+  const active = "FROM card_state cs JOIN cards c ON c.id = cs.card_id AND c.status = 'active' WHERE cs.user_id = ?1";
+  const [, cards, upcoming, weeks, days, kept] = await db.batch<Record<string, any>>([
+    ensureStates(db, user, t),
+    db.prepare(`SELECT COUNT(*) AS total, COUNT(CASE WHEN cs.state = 'review' AND cs.stability >= ?2 THEN 1 END) AS mastered ${active}`).bind(user, MASTERED_DAYS),
+    // De demain à J+7 : ce qui est déjà dû n'apparaît pas, sinon l'arriéré se lirait comme un retard
+    db.prepare(
+      `SELECT date(cs.due, ?2) AS day, COUNT(*) AS n ${active}
+       AND date(cs.due, ?2) > date(?3, ?2) AND date(cs.due, ?2) <= date(?3, ?2, '+7 days') GROUP BY day ORDER BY day`,
+    ).bind(user, mod, t),
+    // Semaine = son lundi ; chaque note plafonnée pour qu'une carte oubliée à l'écran ne compte pas des heures
+    db.prepare(
+      `SELECT date(reviewed_at, ?2, 'weekday 0', '-6 days') AS week, SUM(MIN(COALESCE(duration_ms, 0), ?4)) AS ms, COUNT(*) AS n
+       FROM reviews WHERE user_id = ?1 AND reviewed_at >= ?5
+       GROUP BY week HAVING week >= date(?3, ?2, 'weekday 0', '-55 days') ORDER BY week`,
+    ).bind(user, mod, t, NOTE_CAP_MS, ago(63)),
+    db.prepare(`SELECT COUNT(DISTINCT date(reviewed_at, ?2)) AS n FROM reviews WHERE user_id = ?1 AND date(reviewed_at, ?2) > date(?3, ?2, '-7 days')`).bind(
+      user,
+      mod,
+      t,
+    ),
+    // Retrouvées : notes sur une carte déjà vue au moins un jour plus tôt
+    db.prepare(
+      `SELECT COUNT(*) AS n, COUNT(CASE WHEN grade >= 2 THEN 1 END) AS ok FROM reviews r
+       WHERE r.user_id = ?1 AND r.reviewed_at >= ?2 AND EXISTS (
+         SELECT 1 FROM reviews p WHERE p.user_id = r.user_id AND p.card_id = r.card_id
+         AND p.reviewed_at < strftime('%Y-%m-%dT%H:%M:%fZ', r.reviewed_at, '-1 day'))`,
+    ).bind(user, ago(30)),
+  ]);
+  return c.json({
+    ...cards.results[0],
+    upcoming: upcoming.results,
+    weeks: weeks.results,
+    days: days.results[0].n,
+    kept: kept.results[0],
+  });
 });
 
 // Dessins : uniquement des coordonnées entières (et le texte des étiquettes), le SVG est reconstruit côté client

@@ -234,19 +234,22 @@ Vérification du rendu :
   - Outil « Texte » : forme `{ t: "text", p: [x, y], s }`, 100 caractères au plus
   - Dessin que plus aucune carte ne cite : effacé à la création d'un dessin suivant, un jour après sa propre création
 - [x] Trous `___` dans du code : blanc dans le code en ligne et les blocs colorés ; le prompt autorise les « cloze » sur du code
-- [ ] Mermaid en cache hors ligne (avec la PWA, phase 4)
+- [x] Mermaid en cache hors ligne : précaché par le service worker (phase 4)
 
 ---
 
 ## Phase 4 — Confort et suivi
 
-- [ ] `GET /api/stats` + écran **Statistiques** : cartes maîtrisées, à venir, temps réel de révision par semaine
-  - [ ] `/measure` : choisir des indicateurs qui montrent l'acquis sans culpabiliser
-  - [ ] `/impeccable` pour le rendu des graphiques
-- [ ] PWA installable + hors ligne (réviser sans réseau)
-  - [ ] `/transpose` + `/impeccable adapt` : expérience mobile au doigt
-  - [ ] `/fortify` : comportement hors ligne et synchronisation
-- [ ] Export des cartes
+- [x] `GET /api/stats` + écran **Statistiques** : cartes maîtrisées, à venir, temps réel de révision par semaine
+  - [x] `/measure` : indicateurs et refus dans `docs/design/metrics-stats.md` (pas de série, pas d'arriéré, à venir dès demain)
+  - [x] `/impeccable` : phrases et barres d'encre, sans chiffre-vedette ; barres sous leur libellé au téléphone
+- [x] PWA installable + hors ligne (réviser sans réseau)
+  - Service worker `web/sw.js` : build précaché (7,7 Mo, grammaires Shiki au premier usage), API en réseau d'abord, réponse gardée après 4 s
+  - File gardée de 60 cartes (`GET /api/queue`), préparée à chaque accueil en ligne avec ses dessins et sa coloration ; session hors ligne enregistrée au retour (`POST /sessions` avec `id`, `started_at` ; `/end` avec `ended_at`)
+  - [x] `/transpose` + `/impeccable adapt` : `docs/design/adaptation-revise-mobile.md` — pas de clavier ouvert d'office, retour Android = pause, survol réservé à la souris, cibles de 44 px
+  - [x] `/fortify` : `docs/design/states-offline.md` — délais réseau, stockage plein, version précédente gardée après déploiement
+  - [ ] Vérifier l'installation sur le vrai domaine : manifeste et icônes passent par Access (`crossorigin="use-credentials"`) ; si Chrome ne propose pas l'installation, ajouter une règle Bypass Access pour `/manifest.webmanifest` et `/icon-*.png`
+- [x] Export des cartes : bouton « Exporter » d'une matière, fichier JSON au format de l'import (brouillons exclus, dessins cités par leur id)
 - [x] Plusieurs personnes : contenu partagé (matières, cartes, dessins), progression propre à chacun (`card_state`, `reviews`, `sessions`, `parked_thoughts` par `user_id`) — migration `0003_users.sql`
   - Inviter : Zero Trust → Access → Applications → Revise → Policies → ajouter l'e-mail à la règle Allow
 

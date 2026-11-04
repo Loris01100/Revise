@@ -173,8 +173,10 @@ mark.draw {
   text-decoration: none;
   transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
 }
-.btn:hover {
-  background: color-mix(in srgb, var(--sheet), var(--ink) 7%);
+@media (hover: hover) {
+  .btn:hover {
+    background: color-mix(in srgb, var(--sheet), var(--ink) 7%);
+  }
 }
 .btn:active {
   background: color-mix(in srgb, var(--sheet), var(--ink) 12%);
@@ -184,8 +186,10 @@ mark.draw {
   border-color: var(--ink);
   color: var(--on-ink);
 }
-.btn.primary:hover {
-  background: color-mix(in srgb, var(--ink), var(--paper) 16%);
+@media (hover: hover) {
+  .btn.primary:hover {
+    background: color-mix(in srgb, var(--ink), var(--paper) 16%);
+  }
 }
 .btn.lg {
   min-height: 60px;
@@ -203,8 +207,10 @@ mark.draw {
   border-color: transparent;
   background: transparent;
 }
-.btn.quiet:hover {
-  background: var(--wash);
+@media (hover: hover) {
+  .btn.quiet:hover {
+    background: var(--wash);
+  }
 }
 .btn:disabled {
   opacity: 0.45;
@@ -233,6 +239,19 @@ mark.draw {
   .btn.small {
     min-height: 44px;
   }
+  .chip {
+    height: 44px;
+  }
+  /* Zone de toucher de 44 px autour des petits contrôles, sans changer leur dessin */
+  .switch::before,
+  .home .secondary .link::before {
+    content: "";
+    position: absolute;
+    inset: -9px -4px;
+  }
+  .home .secondary .link {
+    position: relative;
+  }
 }
 .link {
   padding: 0;
@@ -246,8 +265,10 @@ mark.draw {
   text-underline-offset: 0.22em;
   cursor: pointer;
 }
-.link:hover {
-  text-decoration-thickness: 2px;
+@media (hover: hover) {
+  .link:hover {
+    text-decoration-thickness: 2px;
+  }
 }
 .icon {
   flex: none;
@@ -268,8 +289,10 @@ mark.draw {
   border-radius: var(--r);
   color: var(--ink);
 }
-.icon-btn:hover {
-  background: var(--wash);
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--wash);
+  }
 }
 
 .label {
@@ -337,8 +360,10 @@ select.field {
   font-size: 15px;
   cursor: pointer;
 }
-.chip:hover {
-  background: color-mix(in srgb, var(--sheet), var(--ink) 7%);
+@media (hover: hover) {
+  .chip:hover {
+    background: color-mix(in srgb, var(--sheet), var(--ink) 7%);
+  }
 }
 .chip[aria-pressed="true"] {
   background: var(--ink);
@@ -586,8 +611,28 @@ dialog.card-form .actions {
   font-weight: 700;
   text-decoration: none;
 }
-.nav a:hover {
-  background: var(--wash);
+@media (hover: hover) {
+  .nav a:hover {
+    background: var(--wash);
+  }
+}
+.narrow-only {
+  display: none;
+}
+@media (max-width: 440px) {
+  .nav {
+    gap: 0;
+    margin-right: -8px;
+  }
+  .nav a {
+    padding: 10px 8px;
+  }
+  .wide-only {
+    display: none;
+  }
+  .narrow-only {
+    display: inline;
+  }
 }
 .col {
   width: min(480px, 100% - 2 * var(--gutter));
@@ -631,8 +676,10 @@ dialog.card-form .actions {
   color: var(--ink);
   text-decoration: none;
 }
-a.row:hover {
-  background: var(--wash);
+@media (hover: hover) {
+  a.row:hover {
+    background: var(--wash);
+  }
 }
 .row .name {
   flex: 1;
@@ -1142,10 +1189,12 @@ p.empty {
   color: var(--ink);
 }
 
-.settings section + section {
+.settings section + section,
+.stats section + section {
   margin-top: 48px;
 }
-.settings h2 {
+.settings h2,
+.stats h2 {
   margin-bottom: 8px;
   font-size: 15px;
   color: var(--ink-2);
@@ -1166,6 +1215,62 @@ p.empty {
 }
 .setting.indent {
   padding-left: 24px;
+}
+
+/* --- Statistiques --- */
+
+.stats .notice.stale {
+  margin: 0 0 32px;
+}
+.stats .figure {
+  font-size: 19px;
+}
+.stats .figure strong {
+  font-size: clamp(26px, 2vw + 16px, 32px);
+  font-variant-numeric: tabular-nums;
+}
+.stats .figure + .muted {
+  margin-top: 4px;
+}
+.stats .kept {
+  margin-top: 16px;
+}
+.bars {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bars li {
+  display: grid;
+  grid-template-columns: 10em 1fr 5.5em;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--rule);
+}
+.bars .track {
+  height: 8px;
+  background: var(--rule);
+}
+.bars .track span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+.bars .value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 480px) {
+  .bars li {
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+    padding: 10px 0;
+  }
+  .bars .track {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
 }
 
 /* --- Import --- */
@@ -1482,6 +1587,13 @@ p.empty {
   }
   dialog.card-form .actions .btn {
     padding-inline: 10px;
+  }
+}
+
+/* App installée : tirer vers le bas ne recharge pas la page (et la carte en cours) */
+@media (display-mode: standalone) {
+  html {
+    overscroll-behavior-y: none;
   }
 }
 

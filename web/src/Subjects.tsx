@@ -63,6 +63,18 @@ export default function Subjects(p: { id?: string }) {
     act(() => status(c, "suspended"), { text: "Carte suspendue.", undo: () => act(() => status(c, "active")) });
 
   const [failed, setFailed] = createSignal(false);
+  // Fichier au format de l'import : il se recolle tel quel dans une matière. Brouillons exclus, dessins cités par leur id
+  function exportCards(s: Subject) {
+    const out = (cards.latest ?? [])
+      .filter((c) => c.status !== "draft")
+      .map(({ type, question, answer, choices, explanation, source_page }) => ({ type, question, answer, choices, explanation, source_page: source_page ?? null }));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+    a.download = `${s.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "cartes"}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    announce(one(out.length) ? "1 carte exportée." : `${out.length} cartes exportées.`);
+  }
   async function revise(s: Subject) {
     setFailed(false);
     try {
@@ -144,6 +156,12 @@ export default function Subjects(p: { id?: string }) {
                     <mark>{s().name}</mark>
                   </h1>
                   <div class="inline">
+                    {/* Action rare : discrète, en tête ici, donc en dernier sur téléphone (ordre inversé) */}
+                    <Show when={s().cards > 0}>
+                      <button class="btn quiet" onClick={() => exportCards(s())}>
+                        Exporter
+                      </button>
+                    </Show>
                     <button class="btn" onClick={() => setEditing("new")}>
                       <Icon name="plus" />
                       Ajouter une carte

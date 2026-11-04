@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createResource, createRoot, createSignal, onCleanup, onMount, type JSX } from "solid-js";
-import { api, type Card, type CardType, type Color } from "./api";
+import { Offline, api, enqueue, kept, setKept, type Card, type CardType, type Color, type KeptCard } from "./api";
 
 // --- Navigation : quelques chemins, sans routeur ---
 
@@ -75,12 +75,44 @@ export type Mode = { mode: "quick5" } | { mode: "timed"; planned_min: number } |
 export type Run = { id: string; cards: Card[]; mode: Mode; replay?: boolean };
 export const [run, setRun] = createSignal<Run | null>(null);
 
-/** Ouvre une session ; `false` quand il n'y a rien à réviser. */
+/** Ouvre une session ; `false` quand il n'y a rien à réviser. Sans réseau : sur la file gardée, enregistrée au retour. */
 export async function start(mode: Mode): Promise<boolean> {
-  const r = await api<{ id: string | null; cards: Card[] }>("POST", "/sessions", mode);
+  let r: { id: string | null; cards: Card[] };
+  try {
+    r = await api("POST", "/sessions", mode, false, 8_000);
+  } catch (e) {
+    const cards = e instanceof Offline ? offlineCards(mode) : [];
+    if (!cards.length) throw e;
+    const id = crypto.randomUUID();
+    enqueue({ method: "POST", path: "/sessions", body: { ...mode, id, started_at: new Date().toISOString() } });
+    setRun({ id, cards: cards.map(({ due, ...c }) => c), mode });
+    return true;
+  }
   if (!r.id) return false;
   setRun({ id: r.id, cards: r.cards, mode });
   return true;
+}
+
+// Mêmes règles que le serveur : 5 cartes dues pour quick5, toute la file sinon
+function offlineCards(mode: Mode) {
+  const now = new Date().toISOString();
+  if (mode.mode === "quick5") return kept().filter((c) => c.due <= now).slice(0, 5);
+  if (mode.mode === "subject") return kept().filter((c) => c.subject_id === mode.subject_id);
+  return kept();
+}
+
+/** Garde sur l'appareil la prochaine file de cartes, avec leurs dessins et la coloration de leur code. */
+export async function prepare() {
+  const { cards } = await api<{ cards: KeptCard[] }>("GET", "/queue");
+  setKept(cards);
+  const text = cards.map((c) => [c.question, c.answer, c.explanation, ...(c.choices ?? [])].join("\n")).join("\n");
+  for (const [, id] of text.matchAll(DRAWING)) loadDrawing(id).catch(() => {});
+  const langs = new Set([...text.matchAll(/```([\w+#-]+)/g)].map((m) => m[1]));
+  langs.delete("mermaid");
+  if (langs.size) {
+    const { bundledLanguages } = await import("shiki");
+    for (const l of langs) (bundledLanguages as Record<string, () => Promise<unknown>>)[l]?.().catch(() => {});
+  }
 }
 
 // --- Formats ---
@@ -189,7 +221,9 @@ let diagrams = 0;
 function Diagram(p: { src: string }) {
   const [svg, setSvg] = createSignal<string | null>();
   onMount(async () => {
-    const { default: m } = await import("mermaid");
+    const mod = await import("mermaid").catch(() => null);
+    if (!mod) return setSvg(null);
+    const m = mod.default;
     const t = document.documentElement.dataset.theme;
     const dark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     m.initialize({ startOnLoad: false, securityLevel: "strict", theme: dark ? "dark" : "neutral" });

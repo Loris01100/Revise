@@ -264,6 +264,9 @@ Texte d'encre en 13 px / 700 dans un filet `line` de 1 px, coins de 4 px, paddin
 ### Surligneur (signature)
 Le trait est un dégradé incliné à 104°, une bande de 64 % de la hauteur de ligne calée vers le bas, qui laisse libres le haut de la ligne et un liseré dessous, aux bouts biseautés de 0,2em ; il se répète proprement sur chaque ligne d'un texte coupé. À la révélation, le terme clé (`==terme==` dans la réponse, ou le blanc d'un texte à trous) reçoit son trait de gauche à droite en 300 ms après 140 ms, sur `ease` ; sans animation sous `prefers-reduced-motion`. Sans marque dans la réponse, rien n'est surligné.
 
+### Barres (Statistiques)
+Ligne de liste de 44 px : libellé, barre, valeur en chiffres tabulaires alignée à droite. Barre de 8 px en aplat d'encre sur une piste `rule`, longueur relative au maximum de la liste ; pas d'axe, pas de ligne cible, pas de couleur. Sous 480 px, la barre passe sous son libellé, pleine largeur. Les chiffres se disent en phrases (« 17 cartes maîtrisées sur 48 »), jamais en tuile de chiffre-vedette.
+
 ### Toast
 Aplat d'encre, coins de 4 px, centré en bas à 24 px, monte de 8 px en 200 ms.
 
