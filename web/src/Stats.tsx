@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch, createResource } from "solid-js";
-import { Offline, api, cached } from "./api";
-import { Icon, Link, cardsLabel, one } from "./ui";
+import { Offline, api, cached, enqueue, type Parked } from "./api";
+import { Icon, Link, announce, cardsLabel, one } from "./ui";
 
 // Indicateurs et refus : docs/design/metrics-stats.md
 type Stats = {
@@ -70,6 +70,18 @@ export default function StatsPage() {
   };
   const kept = () => stats()!.kept;
 
+  const [parked, { mutate }] = createResource(() => api<Parked[]>("GET", "/parked"));
+  function settle(t: Parked, el: HTMLElement) {
+    enqueue({ method: "PATCH", path: `/parked/${t.id}`, body: { done: true } });
+    // La rangée disparaît : le focus passe à la pensée voisine, sinon au titre de la page
+    const rows = [...document.querySelectorAll(".thoughts .row")];
+    const k = rows.indexOf(el.closest(".row")!);
+    const next = (rows[k + 1] ?? rows[k - 1])?.querySelector("button") ?? document.querySelector<HTMLElement>("h1.title");
+    mutate(parked.latest!.filter((x) => x !== t));
+    announce("Pensée traitée.");
+    next?.focus();
+  }
+
   return (
     <div class="page">
       <header class="top">
@@ -78,7 +90,7 @@ export default function StatsPage() {
             <Icon name="back" />
             <span class="sr-only">Retour à l'accueil</span>
           </Link>
-          <h1 class="title">Statistiques</h1>
+          <h1 class="title" tabIndex={-1}>Statistiques</h1>
         </div>
       </header>
 
@@ -142,6 +154,25 @@ export default function StatsPage() {
             )}
           </Match>
         </Switch>
+
+        {/* Pensées restées sans suite au bilan : sinon elles ne se retrouvent nulle part */}
+        <Show when={parked.latest?.length}>
+          <section class="thoughts" aria-labelledby="st-thoughts">
+            <h2 id="st-thoughts">Pensées à traiter</h2>
+            <ul class="rows">
+              <For each={parked.latest}>
+                {(t) => (
+                  <li class="row">
+                    <span class="name">{t.text}</span>
+                    <button class="btn small" onClick={(e) => settle(t, e.currentTarget)}>
+                      Fait
+                    </button>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </section>
+        </Show>
       </main>
     </div>
   );

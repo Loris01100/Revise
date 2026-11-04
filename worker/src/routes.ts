@@ -306,6 +306,14 @@ api.post("/sessions/:id/end", async (c) => {
   return c.json({ ...s.results[0], parked: parked.results });
 });
 
+// Pensées non traitées, hors bilan (page Statistiques)
+api.get("/parked", async (c) => {
+  const { results } = await c.env.DB.prepare("SELECT id, text, session_id, created_at FROM parked_thoughts WHERE done = 0 AND user_id = ? ORDER BY created_at")
+    .bind(c.var.user)
+    .all();
+  return c.json(results);
+});
+
 api.post("/parked", async (c) => {
   const b = await body(c);
   if (!str(b.text, 2000)) return bad(c, "text");
