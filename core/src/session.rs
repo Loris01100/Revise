@@ -4,9 +4,6 @@ use crate::fsrs::CardState;
 use chrono::{DateTime, Utc};
 use rs_fsrs::State;
 
-/// Nombre de cartes nouvelles introduites par jour.
-pub const NEW_PER_DAY: usize = 10;
-
 /// Une carte active candidate, avec son état FSRS.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SessionCard {
@@ -21,7 +18,7 @@ pub struct SessionCard {
 /// - sinon (`timed`, `subject`) : toutes les dues puis les nouvelles ; si rien n'est dû,
 ///   révision par anticipation des cartes les plus proches de leur échéance.
 ///
-/// `new_quota` = cartes nouvelles encore permises aujourd'hui (`NEW_PER_DAY` moins celles déjà vues).
+/// `new_quota` = cartes nouvelles encore permises aujourd'hui (quota fixé par le worker, `NEW_PER_DAY` dans worker/src/routes.ts).
 pub fn compose(cards: &[SessionCard], quick5: bool, new_quota: usize, now: DateTime<Utc>) -> Vec<&SessionCard> {
     let (mut new, mut reviews): (Vec<_>, Vec<_>) = cards.iter().partition(|c| c.state.state == State::New);
     new.retain(|c| c.state.due <= now);
@@ -60,6 +57,8 @@ fn alternate(mut rest: Vec<&SessionCard>) -> Vec<&SessionCard> {
 mod tests {
     use super::*;
     use chrono::{Duration, TimeZone};
+
+    const NEW_PER_DAY: usize = 10;
 
     fn t0() -> DateTime<Utc> {
         Utc.with_ymd_and_hms(2026, 11, 2, 9, 0, 0).unwrap()

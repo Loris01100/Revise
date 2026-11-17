@@ -3,7 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import { compose, schedule, validate_cards } from "./core";
 import type { App } from "./index";
 
-// Doit rester égal à NEW_PER_DAY dans core/src/session.rs
+// Nombre de cartes nouvelles introduites par jour (seule source ; le core reçoit le quota en paramètre).
 const NEW_PER_DAY = 10;
 const TYPES = ["qa", "cloze", "mcq", "explain"];
 const STATUSES = ["draft", "active", "suspended"];
