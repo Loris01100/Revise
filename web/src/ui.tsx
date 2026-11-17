@@ -161,7 +161,7 @@ export const DRAWING = /!\[dessin\]\(([0-9a-f-]{36})\)/g;
 export const plain = (s: string) => s.replace(/==(.+?)==/g, "$1").replace(DRAWING, "(dessin)");
 
 /** Texte dont les passages `==…==` reçoivent le trait de surligneur. */
-export function Marked(p: { text: string; draw?: boolean }) {
+function Marked(p: { text: string; draw?: boolean }) {
   return (
     <For each={p.text.split(/==(.+?)==/)}>
       {(s, i) => (i() % 2 ? <mark classList={{ draw: p.draw }}>{s}</mark> : s)}

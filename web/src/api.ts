@@ -88,7 +88,7 @@ export function release() {
 
 let running: Promise<void> | null = null;
 // `.finally` passe après l'affectation, même quand la file est vide et que l'envoi finit sans attendre
-export const flush = (): Promise<void> => (running ??= send().finally(() => (running = null)));
+const flush = (): Promise<void> => (running ??= send().finally(() => (running = null)));
 
 async function send() {
   for (let j: Job | undefined; (j = jobs().find((x) => !x.hold)); ) {
