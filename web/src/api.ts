@@ -13,6 +13,8 @@ export type Card = {
   explanation: string | null;
   source_page?: number | null;
   status?: "draft" | "active" | "suspended";
+  /** Revient sans cesse en « À revoir » : sortie des sessions jusqu'à sa réécriture (page Matières seulement). */
+  stuck?: number;
 };
 export type Parked = { id: string; text: string; session_id: string | null };
 

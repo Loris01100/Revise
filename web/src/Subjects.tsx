@@ -5,6 +5,9 @@ import { DrawDialog } from "./Draw";
 import { COLORS, Confirm, DRAWING, Dialog, Icon, Link, Preview, TYPES, announce, arrows, go, hl, loadDrawing, one, plain, start, type Shape } from "./ui";
 
 const STATUS: Record<string, string> = { active: "Active", suspended: "Suspendue", draft: "Brouillon" };
+// Carte qui ne rentre pas : seule une carte active est en révision, donc concernée
+const stuck = (c: Card) => !!c.stuck && c.status === "active";
+const STUCK = "À reformuler";
 const norm = (s: string) =>
   s
     .normalize("NFD")
@@ -24,6 +27,7 @@ export default function Subjects(p: { id?: string }) {
   // Seul l'admin supprime ; caché tant que les droits ne sont pas connus
   const [me] = createResource(() => api<{ admin: boolean }>("GET", "/me"));
   const drafts = () => (cards.latest ?? []).filter((c) => c.status === "draft").length;
+  const stuckCount = () => (cards.latest ?? []).filter(stuck).length;
   // Rangées réconciliées par id : un rechargement garde les mêmes nœuds, donc le focus
   const [rows, setRows] = createStore<Card[]>([]);
   createEffect(() => setRows(reconcile(cards.latest ?? [], { key: "id" })));
@@ -39,7 +43,7 @@ export default function Subjects(p: { id?: string }) {
       (c) =>
         (!t || norm(plain(`${c.question} ${c.answer}`)).includes(t)) &&
         (!type() || c.type === type()) &&
-        (!state() || (c.status ?? "active") === state()),
+        (!state() || (state() === "stuck" ? stuck(c) : (c.status ?? "active") === state())),
     );
   };
 
@@ -254,6 +258,20 @@ export default function Subjects(p: { id?: string }) {
                     </p>
                   )}
                 </Show>
+                <Show when={stuckCount()}>
+                  {(n) => (
+                    <p class="notice drafts">
+                      {one(n())
+                        ? "1 carte revient sans cesse en « À revoir ». Souvent, c'est sa formulation qui coince : elle attend d'être réécrite, hors des sessions."
+                        : `${n()} cartes reviennent sans cesse en « À revoir ». Souvent, c'est leur formulation qui coince : elles attendent d'être réécrites, hors des sessions.`}{" "}
+                      <Show when={state() !== "stuck"}>
+                        <button class="btn small" onClick={() => (setQ(""), setType(""), setState("stuck"))}>
+                          {one(n()) ? "La voir" : "Les voir"}
+                        </button>
+                      </Show>
+                    </p>
+                  )}
+                </Show>
 
                 <Show
                   when={(cards.latest?.length ?? 0) > 0}
@@ -292,6 +310,9 @@ export default function Subjects(p: { id?: string }) {
                     <select class="field" aria-label="État" value={state()} onChange={(e) => setState(e.currentTarget.value)}>
                       <option value="">Tous les états</option>
                       <For each={Object.entries(STATUS)}>{([k, v]) => <option value={k}>{v}</option>}</For>
+                      <Show when={stuckCount() || state() === "stuck"}>
+                        <option value="stuck">{STUCK}</option>
+                      </Show>
                     </select>
                   </div>
                   <Show
@@ -357,7 +378,12 @@ export default function Subjects(p: { id?: string }) {
                               <td class="question">{plain(c.question)}</td>
                               <td>{TYPES[c.type]}</td>
                               {/* L'état ne se dit que quand il sort de l'ordinaire */}
-                              <td>{c.status && c.status !== "active" ? STATUS[c.status] : ""}</td>
+                              <td>
+                                {c.status && c.status !== "active" ? STATUS[c.status] : ""}
+                                <Show when={stuck(c)}>
+                                  <span class="badge">{STUCK}</span>
+                                </Show>
+                              </td>
                               <td class="acts">
                                 <div>
                                   <button class="link" onClick={() => (setToast(null), setEditing(c))}>

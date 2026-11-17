@@ -52,6 +52,17 @@ const ensureStates = (db: D1Database, user: string, t: string) =>
     )
     .bind(user, t);
 
+// Carte coincée : STUCK « À revoir » de suite depuis la dernière autre note ou la dernière réécriture.
+// Presque toujours une carte mal écrite : sortie des sessions, proposée à la réécriture dans Matières.
+// `u` : paramètre SQL de l'utilisateur, `c` : alias de la table cards
+// ponytail: sous-requête par carte ; une colonne entretenue à la note si la base grossit
+const STUCK = 6;
+const stuck = (u: string) =>
+  `((SELECT COUNT(*) FROM reviews r WHERE r.user_id = ${u} AND r.card_id = c.id AND r.grade = 1 AND r.reviewed_at > MAX(
+      COALESCE(c.edited_at, ''),
+      COALESCE((SELECT MAX(p.reviewed_at) FROM reviews p WHERE p.user_id = ${u} AND p.card_id = c.id AND p.grade > 1), '')
+    )) >= ${STUCK})`;
+
 // Droits de la personne connectée : l'interface cache ce qu'elle ne peut pas faire
 api.get("/me", (c) => c.json({ admin: c.var.admin }));
 
@@ -61,7 +72,7 @@ api.get("/subjects", async (c) => {
     ensureStates(c.env.DB, c.var.user, t),
     c.env.DB.prepare(
       `SELECT s.id, s.name, s.color, s.created_at, COUNT(c.id) AS cards,
-              COUNT(CASE WHEN cs.due <= ?1 THEN 1 END) AS due, MIN(cs.due) AS next_due
+              COUNT(CASE WHEN cs.due <= ?1 AND NOT ${stuck("?2")} THEN 1 END) AS due, MIN(cs.due) AS next_due
        FROM subjects s
        LEFT JOIN cards c ON c.subject_id = s.id AND c.status = 'active'
        LEFT JOIN card_state cs ON cs.card_id = c.id AND cs.user_id = ?2
@@ -104,9 +115,9 @@ api.get("/subjects/:id/cards", async (c) => {
   const [, { results }] = await c.env.DB.batch<Record<string, unknown>>([
     ensureStates(c.env.DB, c.var.user, now()),
     c.env.DB.prepare(
-      `SELECT c.id, c.type, c.question, c.answer, c.choices, c.explanation, c.source_page, c.status, c.created_at, cs.due
-       FROM cards c LEFT JOIN card_state cs ON cs.card_id = c.id AND cs.user_id = ?
-       WHERE c.subject_id = ? ORDER BY c.created_at, c.rowid`,
+      `SELECT c.id, c.type, c.question, c.answer, c.choices, c.explanation, c.source_page, c.status, c.created_at, cs.due, ${stuck("?1")} AS stuck
+       FROM cards c LEFT JOIN card_state cs ON cs.card_id = c.id AND cs.user_id = ?1
+       WHERE c.subject_id = ?2 ORDER BY c.created_at, c.rowid`,
     ).bind(c.var.user, c.req.param("id")),
   ]);
   return c.json(results.map(withChoices));
@@ -132,8 +143,10 @@ api.patch("/cards/:id", async (c) => {
   if (typeof f === "string") return bad(c, f);
   // Repasser une carte en brouillon la rendrait supprimable par tous
   if (f.status === "draft" && !c.var.admin) return bad(c, "status");
+  if (!Object.keys(f).length) return bad(c, "body");
+  // Contenu réécrit : une carte coincée revient en révision
+  if (["type", "question", "answer", "choices", "explanation"].some((k) => k in f)) f.edited_at = now();
   const cols = Object.keys(f);
-  if (!cols.length) return bad(c, "body");
   const id = c.req.param("id");
   const res = await c.env.DB.prepare(`UPDATE cards SET ${cols.map((k) => `${k} = ?`)} WHERE id = ?`).bind(...Object.values(f), id).run();
   return res.meta.changes ? c.body(null, 204) : notFound(c);
@@ -218,7 +231,7 @@ async function queue(c: Context<App>, mode: string, subject: string | null, t: s
       `SELECT c.id, c.subject_id, c.type, c.question, c.answer, c.choices, c.explanation,
               cs.due, cs.stability, cs.difficulty, cs.reps, cs.lapses, cs.state, cs.last_review
        FROM cards c JOIN card_state cs ON cs.card_id = c.id AND cs.user_id = ?2
-       WHERE c.status = 'active' AND (?1 IS NULL OR c.subject_id = ?1)`,
+       WHERE c.status = 'active' AND (?1 IS NULL OR c.subject_id = ?1) AND NOT ${stuck("?2")}`,
     ).bind(subject, user),
     // Cartes nouvelles introduites aujourd'hui = première note aujourd'hui
     c.env.DB.prepare(
